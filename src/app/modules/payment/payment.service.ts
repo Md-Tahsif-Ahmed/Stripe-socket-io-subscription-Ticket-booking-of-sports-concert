@@ -2,7 +2,6 @@
 import Stripe from "stripe";
 import stripe from "../../../config/stripe";
 import config from "../../../config";
-import { Booking } from "../booking/booking.model";
 import {
   Transaction,
   TransactionStatus,
@@ -10,19 +9,21 @@ import {
   PayoutStatus,
   RefundStatus,
 } from "./transaction.model";
-import { BOOKING_STATUS, CAR_STATUS } from "../booking/booking.interface";
+ 
 import { InitiatePaymentDto } from "./payment.interface";
 import { User } from "../user/user.model";
 import mongoose from "mongoose";
+import { OrderModel } from "../order/order.model";
+import { ORDER_STATUS } from "../order/order.interface";
 
 const COMMISSION_RATE = 0.15; // 15% commission
 
 const createCheckoutSession = async (input: InitiatePaymentDto) => {
-  const { bookingId, customerEmail, customerName, customerPhone } = input;
+  const { orderId, customerEmail, customerName, customerPhone } = input;
 
-  const booking = await Booking.findById(bookingId).populate("carId");
+  const booking = await OrderModel.findById(orderId).populate("carId");
   if (!booking) throw new Error("Booking not found");
-  if (booking.status !== BOOKING_STATUS.PENDING)
+  if (booking.status !== ORDER_STATUS.PENDING)
     throw new Error("Booking already paid or canceled");
 
   const session = await stripe.checkout.sessions.create({
@@ -31,15 +32,15 @@ const createCheckoutSession = async (input: InitiatePaymentDto) => {
     success_url: `${process.env.BASE_URL}/api/payments/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.BASE_URL}/api/payments/cancel`,
     customer_email: customerEmail,
-    client_reference_id: bookingId,
-    metadata: { booking_id: bookingId },
+    client_reference_id: orderId,
+    metadata: { booking_id: orderId },
     line_items: [
       {
         price_data: {
           currency: "usd",
           product_data: {
-            name: `${(booking.carId as any).brand} ${(booking.carId as any).model} (${(booking.carId as any).licensePlate})`,
-            description: `Booking ID is #${bookingId} for ${(booking.carId as any).brand}, ${(booking.carId as any).model}, ${(booking.carId as any).year}, ${(booking.carId as any).color}`,
+            name: ` Order Payment for Booking #${orderId} `,
+            description: `Booking ID is #${orderId}`,
           },
           unit_amount: Math.round(booking.totalAmount * 100),
         },
@@ -64,7 +65,7 @@ const createCheckoutSession = async (input: InitiatePaymentDto) => {
     stripeSessionId: session.id,
     status: TransactionStatus.PENDING,
   }).then(async (trx) => {
-    await Booking.findByIdAndUpdate(booking._id, {
+    await OrderModel.findByIdAndUpdate(order._id, {
       transactionId: trx._id,
     });
   });

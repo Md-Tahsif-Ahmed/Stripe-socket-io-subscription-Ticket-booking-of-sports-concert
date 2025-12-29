@@ -5,10 +5,8 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { ArtistService } from "./artist.service";
 
- 
-
 const createArtist = catchAsync(async (req: Request, res: Response) => {
-  const { ...artistData } = req.body;
+  const artistData = req.body;
 
   const result = await ArtistService.createArtistToDB(artistData);
 
