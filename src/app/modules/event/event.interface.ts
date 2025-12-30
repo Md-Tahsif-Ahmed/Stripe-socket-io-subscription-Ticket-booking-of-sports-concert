@@ -31,7 +31,7 @@ export interface TicketCategory {
 
 export interface IEvent {
   thumbnail?: string; // URL
-  seatingChart?: string; // URL
+  seatingView?: string; // URL
   title: string;
   artistId: Types.ObjectId; // Ref to Artist model
   category: EventCategory;

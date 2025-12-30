@@ -1,9 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  getMultipleFilesPath,
-  getSingleFilePath,
-  IFolderName,
-} from "../../shared/getFilePath";
+import { getSingleFilePath, IFolderName } from "../../shared/getFilePath";
 interface FileFieldConfig {
   fieldName: IFolderName;
   forceMultiple?: boolean;
@@ -20,10 +16,7 @@ const parseAllFilesData = (...fields: FieldInput[]) => {
         const forceSingle = typeof field !== "string" && field.forceSingle;
 
         let filePaths: string | string[] | undefined;
-
-        if (forceMultiple) {
-          filePaths = getMultipleFilesPath(req.files, fieldName);
-        } else if (forceSingle) {
+        if (forceSingle) {
           filePaths = getSingleFilePath(req.files, fieldName);
         } else {
           const files = (

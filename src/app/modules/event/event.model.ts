@@ -12,7 +12,7 @@ const ticketCategorySchema = new Schema<TicketCategory>({
 const eventSchema = new Schema<IEvent>(
   {
     thumbnail: { type: String },
-    seatingChart: { type: String },
+    seatingView: { type: String },
     title: { type: String, required: true },
     artistId: { type: Schema.Types.ObjectId, ref: 'Artist', required: true, index: true },
     category: { type: String, enum: Object.values(EventCategory), required: true, index: true },

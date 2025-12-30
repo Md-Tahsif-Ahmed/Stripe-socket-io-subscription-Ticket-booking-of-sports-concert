@@ -5,7 +5,7 @@ const urlOptional = z.string().url().optional().or(z.literal(""));
 
 const createArtistZodSchema = z.object({
   body: z.object({
-    image: z.string().url().optional(),
+    image: z.string().optional(),
     name: z.string().min(1, "Artist name is required").trim(),
     genre: z.enum(Object.values(ArtistGenre) as [string, ...string[]]),
     bio: z.string().optional(),
@@ -19,7 +19,7 @@ const createArtistZodSchema = z.object({
 
 const updateArtistZodSchema = z.object({
   body: z.object({
-    image: z.string().url().optional(),
+    image: z.string().optional(),
     name: z.string().min(1).trim().optional(),
     genre: z.enum(Object.values(ArtistGenre) as [string, ...string[]]).optional(),
     bio: z.string().optional(),
