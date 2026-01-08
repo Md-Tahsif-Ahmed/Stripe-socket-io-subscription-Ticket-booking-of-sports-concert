@@ -5,6 +5,21 @@ import sendResponse from "../../../shared/sendResponse";
 import { AuthService } from "./auth.service";
 import { JwtPayload } from "jsonwebtoken";
 
+
+const googleLogin = catchAsync(async (req, res) => {
+  const { idToken } = req.body;
+
+  const result = await AuthService.googleLogin(idToken);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Google login successful",
+    data: result,
+  });
+});
+
+
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { ...verifyData } = req.body;
   const result = await AuthService.verifyEmailToDB(verifyData);
@@ -108,6 +123,7 @@ const resendVerificationEmail = catchAsync(
 // });
 
 export const AuthController = {
+  googleLogin,
   verifyEmail,
   loginUser,
   forgetPassword,

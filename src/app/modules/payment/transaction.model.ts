@@ -6,12 +6,7 @@ export enum TransactionStatus {
   FAILED = "failed",
   CANCELED = "canceled",
 }
-
-// export enum PaymentProvider {
-//   CINETPAY = "cinetpay",
-//   STRIPE = "stripe",
-//   OTHER = "other",
-// }
+ 
 
 export enum PaymentMethod { CARD = "card", }
 
@@ -35,7 +30,7 @@ export enum PayoutType {
 }
 
 export interface ITransaction extends Document {
-  bookingId: Types.ObjectId | string;
+  orderId: Types.ObjectId | string;
   amount: number;
   currency: string;
   method: PaymentMethod;
@@ -64,7 +59,7 @@ export interface ITransaction extends Document {
 
 const transactionSchema = new Schema<ITransaction>(
   {
-    bookingId: { type: Schema.Types.ObjectId, ref: "Booking", required: true },
+    orderId: { type: Schema.Types.ObjectId, ref: "Order", required: true },
     amount: { type: Number, required: true },
     currency: { type: String, default: "usd" },
     method: { type: String, enum: Object.values(PaymentMethod), default:  PaymentMethod.CARD },

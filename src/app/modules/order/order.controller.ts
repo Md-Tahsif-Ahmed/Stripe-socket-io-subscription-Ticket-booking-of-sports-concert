@@ -3,9 +3,15 @@ import { StatusCodes } from "http-status-codes";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { OrderService } from "./order.service";
+import { Types } from "mongoose";
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
-  const result = await OrderService.createOrderToDB(req.body);
+    const payload = {
+      ...req.body,
+      userId: new Types.ObjectId(req.user.id),
+      
+    };
+  const result = await OrderService.createOrderToDB(payload);
 
   sendResponse(res, {
     success: true,

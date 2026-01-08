@@ -22,6 +22,7 @@ export enum SectionColor {
 }
 
 export interface TicketCategory {
+  _id: Types.ObjectId; 
   ticketName: string;
   sectionColor: SectionColor;
   pricePerTicket: number;
@@ -36,7 +37,7 @@ export interface IEvent {
   artistId: Types.ObjectId; // Ref to Artist model
   category: EventCategory;
   eventDate: Date;
-  startTime: string; // e.g., '08:00 PM'
+  // startTime: string; // e.g., '08:00 PM'
   city: string;
   venueName: string;
   fullAddress: string;

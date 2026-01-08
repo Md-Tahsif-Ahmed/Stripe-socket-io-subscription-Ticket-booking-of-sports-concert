@@ -1,5 +1,5 @@
 {
-  "name": "go-connecte",
+  "name": "ticket-booking-backend",
   "version": "1.0.0",
   "main": "app.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "format": "prettier . --write",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Moshfiqur Rahman & Tahsif Ahmed",
+  "author": "Tahsif Ahmed",
   "license": "ISC",
   "description": "",
   "devDependencies": {

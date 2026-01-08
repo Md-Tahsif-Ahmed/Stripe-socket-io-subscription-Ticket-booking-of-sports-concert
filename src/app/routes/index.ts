@@ -14,6 +14,7 @@ import { AboutUsRoutes } from "../modules/about/about-us.route";
 import { RefundPolicyRoutes } from "../modules/refundPolicy/refund-policy.route";
 import { PrivacyRoutes } from "../modules/privacy/privacy-policy.route";
 import { TermsAndConditionsRoutes } from "../modules/terms/terms-and-conditions.route";
+import { MailAdminRoutes } from "../modules/mailAdmin/mailAdmin.routes";
 
 const router = express.Router();
 
@@ -83,7 +84,10 @@ const apiRoutes = [
     path: "/terms",
     route: TermsAndConditionsRoutes,
   },
-
+  {
+    path: "/mail-admin",
+    route: MailAdminRoutes,
+  },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

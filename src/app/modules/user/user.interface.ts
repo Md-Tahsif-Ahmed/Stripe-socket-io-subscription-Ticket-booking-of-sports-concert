@@ -1,6 +1,17 @@
 import { Model } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
 
+export enum MEMBERSHIP_TYPE {
+  NONE = "none",
+  PREMIUM = "premium",
+}
+
+export enum SUBSCRIPTION_STATUS {
+  ACTIVE = "active",
+  DEACTIVATED = "deactivated",
+  NONE = "none",
+}
+
 export type IUser = {
   fullName: string;
   role: USER_ROLES;
@@ -17,6 +28,18 @@ export type IUser = {
   payoutsEnabled?: boolean;
   // .... stripe
 
+  // subscription
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string | null;
+
+  membershipType?: MEMBERSHIP_TYPE;
+  isPremium?: boolean;
+  premiumExpiresAt?: Date | null;
+
+  subscriptionStatus?: SUBSCRIPTION_STATUS;
+  currentPlanPrice: number;
+  currency: string;
+  // .... subscription
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;

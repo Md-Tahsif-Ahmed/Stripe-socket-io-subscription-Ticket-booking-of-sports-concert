@@ -1,12 +1,18 @@
 // src/payment/payment.interface.ts
+// src/app/modules/payment/payment.interface.ts
 
 export interface InitiatePaymentDto {
-  bookingId: string;
+  orderId: string;
   customerEmail: string;
   customerName: string;
   customerPhone?: string;
 }
 
+export interface PaymentIntentResponse {
+  clientSecret: string;
+  paymentIntentId: string;
+}
+ 
 export interface PaymentSuccessResponse {
   success: true;
   paymentUrl: string;
@@ -19,3 +25,4 @@ export interface PaymentErrorResponse {
   message: string;
   errors?: string[];
 }
+

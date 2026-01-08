@@ -9,321 +9,259 @@ import {
   PayoutStatus,
   RefundStatus,
 } from "./transaction.model";
- 
+
 import { InitiatePaymentDto } from "./payment.interface";
 import { User } from "../user/user.model";
-import mongoose from "mongoose";
 import { OrderModel } from "../order/order.model";
 import { ORDER_STATUS } from "../order/order.interface";
 
-const COMMISSION_RATE = 0.15; // 15% commission
+const createPaymentIntent = async (input: InitiatePaymentDto) => {
+  const { orderId, customerEmail, customerName } = input;
 
-const createCheckoutSession = async (input: InitiatePaymentDto) => {
-  const { orderId, customerEmail, customerName, customerPhone } = input;
+  const order = await OrderModel.findById(orderId);
+  if (!order) throw new Error("Order not found");
+  if (order.status !== ORDER_STATUS.PENDING)
+    throw new Error("Order already paid or cancelled");
 
-  const booking = await OrderModel.findById(orderId).populate("carId");
-  if (!booking) throw new Error("Booking not found");
-  if (booking.status !== ORDER_STATUS.PENDING)
-    throw new Error("Booking already paid or canceled");
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: [PaymentMethod.CARD],
-    mode: "payment",
-    success_url: `${process.env.BASE_URL}/api/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.BASE_URL}/api/payments/cancel`,
-    customer_email: customerEmail,
-    client_reference_id: orderId,
-    metadata: { booking_id: orderId },
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: ` Order Payment for Booking #${orderId} `,
-            description: `Booking ID is #${orderId}`,
-          },
-          unit_amount: Math.round(booking.totalAmount * 100),
-        },
-        quantity: 1,
-      },
-    ],
-    phone_number_collection: { enabled: true },
-    billing_address_collection: "required",
+  // Create PaymentIntent
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(order.totalAmount * 100),
+    currency: "usd",
+    receipt_email: customerEmail,
+    metadata: {
+      orderId: order._id.toString(),
+      customerName,
+    },
+    automatic_payment_methods: {
+      enabled: true,
+    },
   });
 
-  // await Transaction.create({
-  //   bookingId: booking._id,
-  //   amount: booking.totalAmount,
-  //   method: PaymentMethod.CARD,
-  //   stripeSessionId: session.id,
-  //   status: TransactionStatus.PENDING,
-  // });
-  await Transaction.create({
-    bookingId: booking._id,
-    amount: booking.totalAmount,
+  // Create Transaction (PENDING)
+  const transaction = await Transaction.create({
+    orderId: order._id,
+    amount: order.totalAmount,
+    currency: "usd",
     method: PaymentMethod.CARD,
-    stripeSessionId: session.id,
     status: TransactionStatus.PENDING,
-  }).then(async (trx) => {
-    await OrderModel.findByIdAndUpdate(order._id, {
-      transactionId: trx._id,
-    });
+    stripePaymentIntentId: paymentIntent.id,
+  });
+
+  await OrderModel.findByIdAndUpdate(order._id, {
+    transactionId: transaction._id,
   });
 
   return {
-    success: true,
-    paymentUrl: session.url!,
-    sessionId: session.id,
+    clientSecret: paymentIntent.client_secret!,
+    paymentIntentId: paymentIntent.id,
   };
 };
 
-const handleWebhook = async (rawBody: Buffer, sig: string) => {
-  let event: Stripe.Event;
+// ================ subscription checkout =================
 
-  try {
-    event = (stripe as unknown as Stripe).webhooks.constructEvent(
-      rawBody,
-      sig,
-      config.stripe.webhookSecret as string
-    );
-  } catch (err: any) {
-    console.error(`Webhook Error: ${err.message}`);
-    return false;
+const createMembershipCheckoutSession = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  let customerId = user.stripeCustomerId;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      metadata: { userId: user._id.toString() },
+    });
+
+    customerId = customer.id;
+    user.stripeCustomerId = customerId;
+    await user.save();
   }
 
-  // ================= PAYMENT SUCCESS =================
-
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const bookingId =
-      session.client_reference_id || session.metadata?.booking_id;
-
-    if (!bookingId) return false;
-
-    const booking = await Booking.findById(bookingId);
-    if (booking && booking.status === BOOKING_STATUS.PENDING) {
-      booking.status = BOOKING_STATUS.PAID;
-
-      // --------- CAR STATUS LOGIC (Rules) --------- //
-      if (!booking.checkIn && !booking.checkOut) {
-        booking.carStatus = CAR_STATUS.UPCOMING;
-      }
-
-      await booking.save();
-
-      const paymentIntentId = session.payment_intent as string;
-
-      const paymentIntent = await stripe.paymentIntents.retrieve(
-        paymentIntentId,
-        { expand: ["latest_charge"] }
-      );
-
-      const chargeId =
-        typeof paymentIntent.latest_charge === "string"
-          ? paymentIntent.latest_charge
-          : paymentIntent.latest_charge?.id;
-
-      if (!chargeId) {
-        throw new Error("Stripe charge not generated");
-      }
-
-      await Transaction.findOneAndUpdate(
-        { stripeSessionId: session.id },
-        {
-          status: TransactionStatus.SUCCEEDED,
-          stripePaymentIntentId: paymentIntentId,
-          stripeChargeId: chargeId,
-        }
-      );
-
-      return true;
-    }
-  }
-
-  // ================= REFUND CONFIRMATION =================
-  if (event.type === "charge.refunded") {
-    const charge = event.data.object as Stripe.Charge;
-
-    await Transaction.findOneAndUpdate(
-      { stripeChargeId: charge.id },
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    customer: customerId,
+    payment_method_types: ["card"],
+    line_items: [
       {
-        refundStatus: RefundStatus.SUCCEEDED,
-        refundedAt: new Date(),
-      }
-    );
+        // price: config.stripe.premium_price_id,
+        price: config.stripe.premium_price_id,
+        quantity: 1,
+      },
+    ],
+    success_url: `https://httpbin.org/status/200`,
+    cancel_url: `https://httpbin.org/status/400`,
 
-    return true;
-  }
+    // success_url: `${config.frontend_url}/membership/success`,
+    // cancel_url: `${config.frontend_url}/membership/cancel`,
+    metadata: {
+      userId: user._id.toString(),
+    },
+  });
 
-  // ================= STRIPE CONNECT ONBOARDING =================
-  if (event.type === "account.updated") {
-    const account = event.data.object as Stripe.Account;
-
-    await User.findOneAndUpdate(
-      { connectedAccountId: account.id },
-      {
-        onboardingCompleted: account.details_submitted,
-        payoutsEnabled: account.payouts_enabled,
-      }
-    );
-
-    return true;
-  }
-
-  return false;
+  return session.url;
 };
 
-// ================= PAYOUT TO HOST =================
+// const handleWebhook = async (rawBody: Buffer, sig: string) => {
+//   let event: Stripe.Event;
+
+//   event = stripe.webhooks.constructEvent(
+//     rawBody,
+//     sig,
+//     config.stripe.webhookSecret!
+//   );
+
+//   // ===== PAYMENT SUCCESS =====
+//   if (event.type === "payment_intent.succeeded") {
+//     const intent = event.data.object as Stripe.PaymentIntent;
+
+//     const orderId = intent.metadata?.orderId;
+//     if (!orderId) return true;
+
+//     const order = await OrderModel.findById(orderId);
+//     if (!order || order.status !== ORDER_STATUS.PENDING) return true;
+
+//     order.status = ORDER_STATUS.PAID;
+//     await order.save();
+
+//     await Transaction.findOneAndUpdate(
+//       { stripePaymentIntentId: intent.id },
+//       {
+//         status: TransactionStatus.SUCCEEDED,
+//         stripeChargeId: intent.latest_charge as string,
+//       }
+//     );
+
+//     return true;
+//   }
+
+//   // ===== PAYMENT FAILED =====
+//   if (event.type === "payment_intent.payment_failed") {
+//     const intent = event.data.object as Stripe.PaymentIntent;
+
+//     await Transaction.findOneAndUpdate(
+//       { stripePaymentIntentId: intent.id },
+//       { status: TransactionStatus.FAILED }
+//     );
+//   }
+
+//   // ===== REFUND =====
+//   if (event.type === "charge.refunded") {
+//     const charge = event.data.object as Stripe.Charge;
+
+//     await Transaction.findOneAndUpdate(
+//       { stripeChargeId: charge.id },
+//       {
+//         refundStatus: RefundStatus.SUCCEEDED,
+//         refundedAt: new Date(),
+//       }
+//     );
+//   }
+
+//   return true;
+// };
+
 // const payoutToHost = async (bookingId: string) => {
 //   const booking = await Booking.findById(bookingId);
-//   if (!booking || booking.payoutProcessed || !booking.checkOut) return;
+//   if (!booking || booking.payoutProcessed) return;
+
+//   const transaction = await Transaction.findById(booking.transactionId);
+//   if (!transaction || transaction.status !== TransactionStatus.SUCCEEDED)
+//     return;
+
+//   const isEligibleForPayout =
+//     booking.checkOut === true ||
+//     (booking.status === BOOKING_STATUS.CANCELLED &&
+//       (transaction.refundAmount ?? 0) > 0);
+
+//   if (!isEligibleForPayout) return;
 
 //   const host = await User.findById(booking.hostId);
-//   console.log("Host info:", host);
 //   if (!host?.connectedAccountId || !host.payoutsEnabled) {
 //     throw new Error("Host payout not enabled");
 //   }
 
-//   const transaction = await Transaction.findById(booking.transactionId);
-//   if (!transaction || transaction.status !== TransactionStatus.SUCCEEDED) {
-//     throw new Error("Payment not completed");
-//   }
-//   if (!transaction.stripeChargeId) {
-//     throw new Error("Stripe charge not found");
+//   const refundedAmount = transaction.refundAmount ?? 0; // USD
+//   const effectiveAmount = transaction.amount - refundedAmount;
+
+//   // Full refund → host gets nothing
+//   if (effectiveAmount <= 0) {
+//     await OrderModel.findByIdAndUpdate(order._id, { payoutProcessed: true });
+//     await Transaction.findByIdAndUpdate(transaction._id, {
+//       payoutStatus: PayoutStatus.SUCCEEDED,
+//     });
+//     return;
 //   }
 
-//   // const commission = Math.round(transaction.amount * COMMISSION_RATE);
-//   // const payoutAmount = transaction.amount - commission;
-//   const commission = Math.round(transaction.amount * COMMISSION_RATE * 100);
-//   const payoutAmount = transaction.amount * 100 - commission;
+//   const commission = Math.round(effectiveAmount * COMMISSION_RATE * 100); // cents
+//   const payoutAmount = Math.round(effectiveAmount * 100) - commission;
 
 //   const transfer = await stripe.transfers.create({
 //     amount: payoutAmount,
 //     currency: transaction.currency,
 //     destination: host.connectedAccountId,
-//     // source_transaction: transaction.stripePaymentIntentId!,
-//     source_transaction: transaction.stripeChargeId,
+//     source_transaction: transaction.stripeChargeId!,
 //   });
 
 //   await Transaction.findByIdAndUpdate(transaction._id, {
-//     commissionAmount: commission,
+//     commissionAmount: Math.round(effectiveAmount * COMMISSION_RATE),
 //     payoutStatus: PayoutStatus.SUCCEEDED,
 //     stripeTransferId: transfer.id,
-//     hostReceiptAmount: payoutAmount,
+//     hostReceiptAmount: payoutAmount / 100,
 //   });
 
-//   await Booking.findByIdAndUpdate(bookingId, {
+//   await OrderModel.findByIdAndUpdate(orderId, {
 //     payoutProcessed: true,
 //     payoutAt: new Date(),
 //   });
 // };
 
-const payoutToHost = async (bookingId: string) => {
-  const booking = await Booking.findById(bookingId);
-  if (!booking || booking.payoutProcessed) return;
+// // ================ Refund  =================
 
-  const transaction = await Transaction.findById(booking.transactionId);
-  if (!transaction || transaction.status !== TransactionStatus.SUCCEEDED)
-    return;
+// const refundBookingPayment = async (
+//   booking: any,
+//   transaction: any,
+//   refundPercentage: number,
+//   session: mongoose.ClientSession
+// ) => {
+//   if (!transaction.stripeChargeId) {
+//     throw new Error("Stripe charge not found");
+//   }
 
-  const isEligibleForPayout =
-    booking.checkOut === true ||
-    (booking.status === BOOKING_STATUS.CANCELLED &&
-      (transaction.refundAmount ?? 0) > 0);
+//   const refundAmountInCents = Math.round(
+//     transaction.amount * refundPercentage * 100
+//   );
 
-  if (!isEligibleForPayout) return;
+//   //  Stripe call (EXTERNAL)
+//   const refund = await stripe.refunds.create(
+//     {
+//       charge: transaction.stripeChargeId,
+//       amount: refundAmountInCents,
+//     },
+//     {
+//       idempotencyKey: `refund_${booking._id}`,
+//     }
+//   );
 
-  const host = await User.findById(booking.hostId);
-  if (!host?.connectedAccountId || !host.payoutsEnabled) {
-    throw new Error("Host payout not enabled");
-  }
+//   //  DB update (ATOMIC via session)
+//   transaction.refundId = refund.id;
+//   transaction.refundAmount = refundAmountInCents / 100;
+//   transaction.refundStatus = RefundStatus.PENDING;
+//   transaction.status = TransactionStatus.CANCELED;
 
-  const refundedAmount = transaction.refundAmount ?? 0; // USD
-  const effectiveAmount = transaction.amount - refundedAmount;
+//   await transaction.save({ session });
 
-  // Full refund → host gets nothing
-  if (effectiveAmount <= 0) {
-    await Booking.findByIdAndUpdate(bookingId, { payoutProcessed: true });
-    await Transaction.findByIdAndUpdate(transaction._id, {
-      payoutStatus: PayoutStatus.SUCCEEDED,
-    });
-    return;
-  }
-
-  const commission = Math.round(effectiveAmount * COMMISSION_RATE * 100); // cents
-  const payoutAmount = Math.round(effectiveAmount * 100) - commission;
-
-  const transfer = await stripe.transfers.create({
-    amount: payoutAmount,
-    currency: transaction.currency,
-    destination: host.connectedAccountId,
-    source_transaction: transaction.stripeChargeId!,
-  });
-
-  await Transaction.findByIdAndUpdate(transaction._id, {
-    commissionAmount: Math.round(effectiveAmount * COMMISSION_RATE),
-    payoutStatus: PayoutStatus.SUCCEEDED,
-    stripeTransferId: transfer.id,
-    hostReceiptAmount: payoutAmount / 100,
-  });
-
-  await Booking.findByIdAndUpdate(bookingId, {
-    payoutProcessed: true,
-    payoutAt: new Date(),
-  });
-};
-
-// ================ Refund  =================
-
-const refundBookingPayment = async (
-  booking: any,
-  transaction: any,
-  refundPercentage: number,
-  session: mongoose.ClientSession
-) => {
-  if (!transaction.stripeChargeId) {
-    throw new Error("Stripe charge not found");
-  }
-
-  const refundAmountInCents = Math.round(
-    transaction.amount * refundPercentage * 100
-  );
-
-  //  Stripe call (EXTERNAL)
-  const refund = await stripe.refunds.create(
-    {
-      charge: transaction.stripeChargeId,
-      amount: refundAmountInCents,
-    },
-    {
-      idempotencyKey: `refund_${booking._id}`,
-    }
-  );
-
-  //  DB update (ATOMIC via session)
-  transaction.refundId = refund.id;
-  transaction.refundAmount = refundAmountInCents / 100;
-  transaction.refundStatus = RefundStatus.PENDING;
-  transaction.status = TransactionStatus.CANCELED;
-
-  await transaction.save({ session });
-
-  //  Optional but useful response
-  return {
-    refundId: refund.id,
-    refundAmount: refundAmountInCents / 100,
-    refundPercentage: refundPercentage * 100,
-  };
-};
-
-
-
+//   //  Optional but useful response
+//   return {
+//     refundId: refund.id,
+//     refundAmount: refundAmountInCents / 100,
+//     refundPercentage: refundPercentage * 100,
+//   };
+// };
 
 // -------- Export as object ----------
 
 export const PaymentService = {
-  createCheckoutSession,
-  handleWebhook,
-  payoutToHost,
-  refundBookingPayment,
+  createPaymentIntent,
+  createMembershipCheckoutSession,
+  // payoutToHost,
+  // refundBookingPayment,
 };

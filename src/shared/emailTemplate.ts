@@ -1,4 +1,5 @@
-import { ICreateAccount, IResetPassword } from "../types/emailTemplate";
+import config from "../config";
+import { IContactEmailValues, ICreateAccount, IResetPassword } from "../types/emailTemplate";
 
 const createAccount = (values: ICreateAccount) => {
   const data = {
@@ -95,8 +96,29 @@ const resetPassword = (values: IResetPassword) => {
   };
   return data;
 };
+ 
+const contactMessage = (values: IContactEmailValues) => {
+  const data = {
+    to: config.support_receiver_email || 'tahsif.cse.ewu@gmail.com', 
+    subject: `New Contact Message: ${values.subject}`,
+    html: `
+      <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
+        <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #D0A933; font-size: 24px; margin-bottom: 20px;">New Contact Message Received</h2>
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;"><strong>Name:</strong> ${values.name}</p>
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;"><strong>Email:</strong> ${values.email}</p>
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;"><strong>Subject:</strong> ${values.subject}</p>
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;"><strong>Message:</strong> ${values.message}</p>
+          <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">&copy; ${new Date().getFullYear()} Ticket Booking. All rights reserved.</p>
+        </div>
+      </body>
+    `,
+  };
+  return data;
+};
 
 export const emailTemplate = {
   createAccount,
   resetPassword,
+  contactMessage,
 };

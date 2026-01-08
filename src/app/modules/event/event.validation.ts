@@ -17,7 +17,7 @@ const createEventZodSchema = z.object({
     artistId: z.string({ required_error: 'Artist ID is required' }),
     category: z.enum(Object.values(EventCategory) as [string, ...string[]]),
     eventDate: z.coerce.date({ required_error: 'Event date is required' }),
-    startTime: z.string({ required_error: 'Start time is required' }),
+    // startTime: z.string({ required_error: 'Start time is required' }),
     city: z.string({ required_error: 'City is required' }),
     venueName: z.string({ required_error: 'Venue name is required' }),
     fullAddress: z.string({ required_error: 'Full address is required' }),
@@ -35,7 +35,7 @@ const updateEventZodSchema = z.object({
     category: z.enum(Object.values(EventCategory) as [string, ...string[]]).optional(),
     eventDate: z.coerce.date({ required_error: 'Event date is required' }),
 
-    startTime: z.string().min(1).optional(),
+    // startTime: z.string().min(1).optional(),
     city: z.string().min(1).optional(),
     venueName: z.string().min(1).optional(),
     fullAddress: z.string().min(1).optional(),

@@ -14,12 +14,17 @@ router.post(
   validateRequest(initiatePaymentSchema),
   PaymentController.initiatePayment
 );
+router.post(
+  "/create-membership-checkout",
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  PaymentController.createMembershipCheckout
+);
 router.get("/success", PaymentController.success);
 router.get("/cancel", PaymentController.cancel);
-router.post(
-  "/:bookingId",
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-  PaymentController.payoutToHostController
-);
+// router.post(
+//   "/:bookingId",
+//   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+//   PaymentController.payoutToHostController
+// );
 
 export const paymentRoutes = router;

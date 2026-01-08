@@ -26,6 +26,7 @@ export default {
     stripeSecretKey: process.env.STRIPE_API_SECRET!,
     webhookSecret: process.env.WEBHOOK_SECRET!,
     paymentSuccess: process.env.WEBHOOK_SECRET!,
+    premium_price_id: process.env.STRIPE_PREMIUM_PRICE_ID!,
     BASE_URL: process.env.BASE_URL!,
   },
   email: {
@@ -44,5 +45,13 @@ export default {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,
     serviceSid: process.env.TWILIO_SERVICE_SID,
+  },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  },
+  facebook: {
+    clientId: process.env.FACEBOOK_CLIENT_ID,
+    clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
   },
 };

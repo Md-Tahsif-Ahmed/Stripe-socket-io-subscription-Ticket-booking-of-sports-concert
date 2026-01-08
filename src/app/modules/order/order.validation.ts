@@ -2,61 +2,33 @@ import { z } from "zod";
 
 /* ---------------------------- CREATE ORDER ---------------------------- */
 const createOrderZodSchema = z.object({
-  body: z.object({
-    eventId: z.string({
-      required_error: "Event ID is required",
-    }),
+body: z.object({
+  eventId: z.string(),
+  ticketCategoryId: z.string(), // ✅ MUST
+  quantity: z.number().min(1),
 
-    quantity: z
-      .number({
-        required_error: "Quantity is required",
-      })
-      .min(1, "Quantity must be at least 1"),
-
-    ticketType: z.string({
-      required_error: "Ticket type is required",
-    }),
-
-    contact: z.object({
-      name: z.string({
-        required_error: "Contact name is required",
-      }),
-      email: z
-        .string({
-          required_error: "Contact email is required",
-        })
-        .email("Invalid email address"),
-      countryCode: z.string({
-        required_error: "Country code is required",
-      }),
-      phone: z.string({
-        required_error: "Phone number is required",
-      }),
-    }),
-
-    address: z.object({
-      line1: z.string({
-        required_error: "Address line1 is required",
-      }),
-      line2: z.string().optional(),
-      city: z.string({
-        required_error: "City is required",
-      }),
-      zip: z.string({
-        required_error: "ZIP code is required",
-      }),
-      country: z.string({
-        required_error: "Country is required",
-      }),
-    }),
+  contact: z.object({
+    name: z.string(),
+    email: z.string().email(),
+    countryCode: z.string(),
+    phone: z.string(),
   }),
-});
+
+  address: z.object({
+    line1: z.string(),
+    line2: z.string().optional(),
+    city: z.string(),
+    zip: z.string(),
+    country: z.string(),
+  }),
+
+}),});
 
 /* ---------------------------- UPDATE ORDER ---------------------------- */
 const updateOrderZodSchema = z.object({
   body: z.object({
     quantity: z.number().min(1).optional(),
-    ticketType: z.string().optional(),
+    // ticketType: z.string().optional(),
 
     contact: z
       .object({

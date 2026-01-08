@@ -1,8 +1,9 @@
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
 import QueryBuilder from "../../builder/queryBuilder";
-import { IArtist } from "./artist.interface";
+import { IArtist, IArtistWithEvents } from "./artist.interface";
 import { ArtistModel } from "./artist.model";
+import { EventModel } from "../event/event.model";
 
  
 
@@ -98,15 +99,34 @@ const getAllArtistsFromDB = async (query: any) => {
   };
 };
 
-const getArtistByIdFromDB = async (id: string): Promise<IArtist> => {
-  const artist = await ArtistModel.findById(id);
+ const getArtistByIdFromDB = async (id: string): Promise<IArtist> => {
+    const artist = await ArtistModel.findById(id).lean(); // lean() for performance, plain JS object
 
-  if (!artist) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Artist not found");
-  }
+    if (!artist) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Artist not found');
+    }
 
-  return artist;
-};
+    const now = new Date();
+
+
+  const events = await EventModel.find({
+    artistId: artist._id,
+    eventDate: { $gte: now },
+  })
+    .select(
+      'title category eventDate startTime city venueName fullAddress ticketSold ticketCategories'
+    )
+    .sort({ eventDate: 1 })
+    .lean();
+
+    // Artist + events  
+    const artistWithEvents: IArtistWithEvents = {
+      ...artist,
+      events,
+    };
+
+    return artistWithEvents;
+  };
 
 const deleteArtistFromDB = async (id: string): Promise<IArtist> => {
   const artist = await ArtistModel.findById(id);

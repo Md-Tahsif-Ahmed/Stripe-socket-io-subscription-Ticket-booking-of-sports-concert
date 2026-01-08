@@ -1,3 +1,5 @@
+import { IEvent } from '../event/event.interface';
+
 export enum ArtistGenre {
   POP = "Pop",
   ROCK = "Rock",
@@ -20,5 +22,8 @@ export interface IArtist {
   facebook?: string; // Individual field
   website?: string; // Individual field
   isVerified: boolean;
+}
+export interface IArtistWithEvents extends IArtist {
+  events: IEvent[];
 }
  

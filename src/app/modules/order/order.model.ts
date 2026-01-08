@@ -1,5 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 import { IOrder, ORDER_STATUS } from "./order.interface";
+import { strip } from "colors";
 
 const orderSchema = new Schema<IOrder>(
   {
@@ -16,6 +17,10 @@ const orderSchema = new Schema<IOrder>(
       required: true,
       index: true,
     },
+    ticketCategoryId: {
+      type: String,
+      required: true,
+    },
 
     transactionId: {
       type: Schema.Types.ObjectId,
@@ -29,9 +34,21 @@ const orderSchema = new Schema<IOrder>(
       max: 6,
     },
 
-    ticketType: {
-      type: String,
+    // ticketType: {
+    //   type: String,
+    //   required: true,
+    // },
+
+    subtotalAmount: {
+      type: Number,
       required: true,
+      min: 0,
+    },
+
+    serviceFee: {
+      type: Number,
+      required: true,
+      min: 0,
     },
 
     totalAmount: {

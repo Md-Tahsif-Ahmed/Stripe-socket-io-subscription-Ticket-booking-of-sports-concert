@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
-import { IUser, UserModal } from "./user.interface";
+import { IUser, MEMBERSHIP_TYPE, SUBSCRIPTION_STATUS, UserModal } from "./user.interface";
 import bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import { StatusCodes } from "http-status-codes";
@@ -15,7 +15,7 @@ const userSchema = new Schema<IUser, UserModal>(
     email: {
       type: String,
       required: false,
-      unique: false,
+      unique: true,
       lowercase: true,
     },
     countryCode: {
@@ -69,6 +69,44 @@ const userSchema = new Schema<IUser, UserModal>(
       default: false,
     },
     // .... stripe
+
+   
+    // Stripe & Membership Logic +  // Subscription
+    stripeCustomerId: {
+      type: String,
+      default: null,
+    },
+
+    stripeSubscriptionId: {
+      type: String,
+      default: null,
+    },
+
+    membershipType: {
+      type: String,
+      enum: Object.values(MEMBERSHIP_TYPE),
+      default: MEMBERSHIP_TYPE.NONE,
+    },
+
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+
+    premiumExpiresAt: {
+      type: Date,
+      default: null,
+    },
+
+    subscriptionStatus: {
+      type: String,
+      enum: Object.values(SUBSCRIPTION_STATUS),
+      default: SUBSCRIPTION_STATUS.NONE,
+    },
+
+    currentPlanPrice: { type: Number, default: 0 },
+    currency: { type: String, default: "usd" },
+    // .... Subscription
     authentication: {
       type: {
         isResetPassword: {

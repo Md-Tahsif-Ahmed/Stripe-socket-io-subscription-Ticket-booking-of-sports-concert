@@ -16,8 +16,62 @@ import cryptoToken from "../../../util/cryptoToken";
 import generateOTP from "../../../util/generateOTP";
 import { ResetToken } from "../resetToken/resetToken.model";
 import { User } from "../user/user.model";
-import { STATUS } from "../../../enums/user";
- 
+import { USER_ROLES } from "../../../enums/user";
+import { OAuth2Client } from "google-auth-library";
+
+
+//  google login 
+
+const client = new OAuth2Client(config.google.clientId);
+
+const googleLogin = async (idToken: string) => {
+  // 1 Verify Google token
+  const ticket = await client.verifyIdToken({
+    idToken,
+    // audience: config.google.clientId,
+    audience: "196053531094-8jrlncksn61cot0oni87ctfekd8hn5k6.apps.googleusercontent.com",
+  });
+
+  const payload = ticket.getPayload();
+  if (!payload?.email) {
+    throw new Error("Invalid Google token");
+  }
+
+  const { email, name, picture } = payload;
+
+  //  Check user exists
+  let user = await User.findOne({ email });
+
+  // If not exists → create user
+  if (!user) {
+    user = await User.create({
+      fullName: name,
+      email,
+      profileImage: picture,
+      role: USER_ROLES.USER,
+      verified: true,
+      agreedToTerms: true,
+      password: undefined, // social login
+    });
+  }
+
+  //  Generate JWT
+  const token = jwtHelper.createToken(
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.jwt_expire_in as string
+  );
+
+  return {
+    token,
+    user,
+  };
+};
+
 
 // login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -343,6 +397,7 @@ const resendVerificationEmailToDB = async (email: string) => {
 // };
 
 export const AuthService = {
+  googleLogin,
   verifyEmailToDB,
   loginUserFromDB,
   forgetPasswordToDB,

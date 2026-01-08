@@ -6,6 +6,9 @@ import { AuthController } from "./auth.controller";
 import { AuthValidation } from "./auth.validation";
 const router = express.Router();
 
+
+router.post("/google", AuthController.googleLogin);
+
 router.post(
   "/login",
   validateRequest(AuthValidation.createLoginZodSchema),

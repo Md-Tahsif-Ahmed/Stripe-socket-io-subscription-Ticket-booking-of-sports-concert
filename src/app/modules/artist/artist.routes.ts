@@ -26,6 +26,15 @@ router.post(
   ArtistController.createArtist
 );
 
+
+
+/**
+ * Get All Artists
+ * GET /artists
+ * Public (Event create dropdown / listing)
+ */
+router.get("/", ArtistController.getAllArtists);
+
 /**
  * Update Artist (Admin only)
  * PATCH /artists/:id
@@ -41,13 +50,6 @@ router.patch(
   validateRequest(ArtistValidation.updateArtistZodSchema),
   ArtistController.updateArtist
 );
-
-/**
- * Get All Artists
- * GET /artists
- * Public (Event create dropdown / listing)
- */
-router.get("/", ArtistController.getAllArtists);
 
 /**
  * Get Artist By ID
