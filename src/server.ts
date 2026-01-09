@@ -6,6 +6,7 @@ import colors from "colors";
 import { socketHelper } from "./helpers/socketHelper";
 import { Server } from "socket.io";
 import seedSuperAdmin from "./DB";
+import { startCronJobs } from "./cron";
 
 //uncaught exception
 process.on("uncaughtException", (error) => {
@@ -31,6 +32,8 @@ async function main() {
         colors.yellow(`♻️  Application listening on port:${config.port}`),
       );
     });
+
+    startCronJobs();
 
     //socket
     const io = new Server(server, {

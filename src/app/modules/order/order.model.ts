@@ -27,6 +27,12 @@ const orderSchema = new Schema<IOrder>(
       ref: "Transaction",
     },
 
+    orderCode: {
+      type: String,
+      unique: true,
+      index: true,
+    },
+
     quantity: {
       type: Number,
       required: true,
@@ -61,6 +67,11 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: Object.values(ORDER_STATUS),
       default: ORDER_STATUS.PENDING,
+      index: true,
+    },
+
+    expiresAt: {
+      type: Date,
       index: true,
     },
 

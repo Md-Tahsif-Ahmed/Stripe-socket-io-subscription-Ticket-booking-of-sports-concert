@@ -34,6 +34,12 @@ router.get(
   OrderController.getAllOrders
 );
 
+// ===================My Orders List Route===========================
+router.get(
+  "/my-orders",
+  requireUser,
+  OrderController.getMyOrders
+);
 /* ---------------------------- ORDER BY ID ------------------------------ */
 router
   .route("/:id")

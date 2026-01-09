@@ -68,10 +68,25 @@ const deleteOrder = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// My order list for ticket booking
+const getMyOrders = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+
+  const result = await OrderService.getMyOrdersFromDB(userId, req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "My orders retrieved successfully",
+    data: result,
+  });
+});
+
 export const OrderController = {
   createOrder,
   getAllOrders,
   getOrderById,
   updateOrder,
   deleteOrder,
+  getMyOrders,
 };

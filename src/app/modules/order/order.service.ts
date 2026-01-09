@@ -7,112 +7,162 @@ import mongoose, { Types } from "mongoose";
 import { User } from "../user/user.model";
 import { EventModel } from "../event/event.model";
 import { calculateServiceFee } from "../../../util/serviceFeeCalculation";
+import { getNextOrderCode } from "../../../util/orderOTPgenerate";
 
 /**
  * CREATE ORDER
  */
+// const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
+//   const user = await User.findById(payload.userId).lean();
+//   if (!user) {
+//     throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+//   }
+
+//   const event = await EventModel.findById(payload.eventId).lean();
+//   if (!event) {
+//     throw new ApiError(StatusCodes.NOT_FOUND, "Event not found");
+//   }
+
+//   if (!event.ticketCategories?.length) {
+//     throw new ApiError(
+//       StatusCodes.BAD_REQUEST,
+//       "No ticket categories found for this event"
+//     );
+//   }
+
+//   const ticketCategoryObjectId = new Types.ObjectId(payload.ticketCategoryId);
+
+//   const ticketCategory = event.ticketCategories.find((tc) =>
+//     tc._id.equals(ticketCategoryObjectId)
+//   );
+//   console.log("Ticket Category Found:", ticketCategory);
+
+//   if (!ticketCategory) {
+//     throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid ticket category");
+//   }
+
+//   const quantity = payload.quantity;
+
+//   if (!Number.isInteger(quantity) || quantity <= 0) {
+//     throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid ticket quantity");
+//   }
+
+//   if (event.eventDate && new Date(event.eventDate) < new Date()) {
+//     throw new ApiError(StatusCodes.BAD_REQUEST, "Event has already occurred");
+//   }
+
+//   if (ticketCategory.totalQuantity < quantity) {
+//     throw new ApiError(StatusCodes.BAD_REQUEST, "Not enough tickets available");
+//   }
+
+//   const subtotalAmount = ticketCategory.pricePerTicket * quantity;
+//   const serviceFee = calculateServiceFee(user, subtotalAmount);
+//   const totalAmount = subtotalAmount + serviceFee;
+
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     const updateRes = await EventModel.updateOne(
+//       {
+//         _id: payload.eventId,
+//         "ticketCategories._id": ticketCategoryObjectId,
+//         "ticketCategories.totalQuantity": { $gte: quantity },
+//       },
+//       {
+//         $inc: {
+//           ticketSold: quantity,
+//           "ticketCategories.$.totalQuantity": -quantity,
+//         },
+//       },
+//       { session }
+//     );
+
+//     if (updateRes.modifiedCount === 0) {
+//       throw new ApiError(StatusCodes.BAD_REQUEST, "Ticket sold out");
+//     }
+
+//     const orderCode = await getNextOrderCode();
+
+//     const orderDoc = await OrderModel.create(
+//       [
+//         {
+//           orderCode,
+//           userId: payload.userId,
+//           eventId: payload.eventId,
+//           ticketCategoryId: payload.ticketCategoryId,
+
+//           ticketType: ticketCategory.ticketName,
+
+//           quantity: payload.quantity,
+//           subtotalAmount,
+//           serviceFee,
+//           totalAmount,
+
+//           contact: payload.contact,
+//           address: payload.address,
+
+//           status: ORDER_STATUS.PENDING,
+//         },
+//       ],
+//       { session }
+//     );
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     return orderDoc[0];
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     throw error;
+//   }
+// };
+
+
 const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
   const user = await User.findById(payload.userId).lean();
-  if (!user) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
-  }
+  if (!user) throw new ApiError(404, "User not found");
 
   const event = await EventModel.findById(payload.eventId).lean();
-  if (!event) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Event not found");
-  }
-
-  if (!event.ticketCategories?.length) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      "No ticket categories found for this event"
-    );
-  }
+  if (!event) throw new ApiError(404, "Event not found");
 
   const ticketCategoryObjectId = new Types.ObjectId(payload.ticketCategoryId);
-
-  const ticketCategory = event.ticketCategories.find((tc) =>
+  const ticketCategory = event.ticketCategories.find(tc =>
     tc._id.equals(ticketCategoryObjectId)
   );
-  console.log("Ticket Category Found:", ticketCategory);
-
-  if (!ticketCategory) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid ticket category");
-  }
+  if (!ticketCategory) throw new ApiError(400, "Invalid ticket category");
 
   const quantity = payload.quantity;
+  if (!Number.isInteger(quantity) || quantity <= 0)
+    throw new ApiError(400, "Invalid quantity");
 
-  if (!Number.isInteger(quantity) || quantity <= 0) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid ticket quantity");
-  }
-
-  if (event.eventDate && new Date(event.eventDate) < new Date()) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Event has already occurred");
-  }
-
-  if (ticketCategory.totalQuantity < quantity) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Not enough tickets available");
-  }
+  if (event.eventDate && new Date(event.eventDate) < new Date())
+    throw new ApiError(400, "Event expired");
 
   const subtotalAmount = ticketCategory.pricePerTicket * quantity;
   const serviceFee = calculateServiceFee(user, subtotalAmount);
   const totalAmount = subtotalAmount + serviceFee;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const orderCode = await getNextOrderCode();
 
-  try {
-    const updateRes = await EventModel.updateOne(
-      {
-        _id: payload.eventId,
-        "ticketCategories._id": ticketCategoryObjectId,
-        "ticketCategories.totalQuantity": { $gte: quantity },
-      },
-      {
-        $inc: {
-          ticketSold: quantity,
-          "ticketCategories.$.totalQuantity": -quantity,
-        },
-      },
-      { session }
-    );
+  const order = await OrderModel.create({
+    orderCode,
+    userId: payload.userId,
+    eventId: payload.eventId,
+    ticketCategoryId: payload.ticketCategoryId,
+    ticketType: ticketCategory.ticketName,
+    quantity,
+    subtotalAmount,
+    serviceFee,
+    totalAmount,
+    contact: payload.contact,
+    address: payload.address,
+    status: ORDER_STATUS.PENDING,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
 
-    if (updateRes.modifiedCount === 0) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Ticket sold out");
-    }
-
-    const orderDoc = await OrderModel.create(
-      [
-        {
-          userId: payload.userId,
-          eventId: payload.eventId,
-          ticketCategoryId: payload.ticketCategoryId,
-
-          ticketType: ticketCategory.ticketName, // ✅ REQUIRED FIELD FIX
-
-          quantity: payload.quantity,
-          subtotalAmount,
-          serviceFee,
-          totalAmount,
-
-          contact: payload.contact, // ✅ FIX
-          address: payload.address, // ✅ FIX
-
-          status: ORDER_STATUS.PENDING,
-        },
-      ],
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return orderDoc[0];
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
+  return order;
 };
 
 /**
@@ -199,10 +249,33 @@ const deleteOrderFromDB = async (id: string): Promise<IOrder> => {
   return deletedOrder;
 };
 
+// My order list for ticket booking
+
+const getMyOrdersFromDB = async (userId: string, query: any) => {
+  const baseQuery = OrderModel.find({
+    userId: new Types.ObjectId(userId),
+  })
+    .populate("eventId")
+    .sort({ createdAt: -1 });
+
+  const queryBuilder = new QueryBuilder<IOrder>(baseQuery, query)
+    .filter()
+    .paginate();
+
+  const orders = await queryBuilder.modelQuery;
+  const meta = await queryBuilder.countTotal();
+
+  return {
+    data: orders,
+    meta,
+  };
+};
+
 export const OrderService = {
   createOrderToDB,
   getAllOrdersFromDB,
   getOrderByIdFromDB,
   updateOrderToDB,
   deleteOrderFromDB,
+  getMyOrdersFromDB,
 };

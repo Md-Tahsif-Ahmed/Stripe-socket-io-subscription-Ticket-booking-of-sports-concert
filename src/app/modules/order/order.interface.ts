@@ -13,12 +13,14 @@
     eventId: Types.ObjectId;
     ticketCategoryId: string;
     transactionId?: Types.ObjectId;
+    orderCode: string;
     quantity: number;
     ticketType:  string;
     subtotalAmount: number;
     serviceFee: number;
     totalAmount: number;    
     status: ORDER_STATUS;
+    expiresAt?: Date;
     contact: {
       name: string;
       email: string;
