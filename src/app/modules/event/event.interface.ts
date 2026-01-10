@@ -27,6 +27,7 @@ export interface TicketCategory {
   sectionColor: SectionColor;
   pricePerTicket: number;
   totalQuantity: number;
+  reservedQuantity: number;
   notes?: string; // Optional
 }
 

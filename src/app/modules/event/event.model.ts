@@ -15,6 +15,12 @@ const ticketCategorySchema = new Schema<TicketCategory>({
   },
   pricePerTicket: { type: Number, required: true, min: 0 },
   totalQuantity: { type: Number, required: true, min: 0 },
+  reservedQuantity: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
   notes: { type: String },
 });
 

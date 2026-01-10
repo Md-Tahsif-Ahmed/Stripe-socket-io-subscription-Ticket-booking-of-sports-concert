@@ -120,49 +120,132 @@ import { getNextOrderCode } from "../../../util/orderOTPgenerate";
 // };
 
 
+// const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
+//   const user = await User.findById(payload.userId).lean();
+//   if (!user) throw new ApiError(404, "User not found");
+
+//   const event = await EventModel.findById(payload.eventId).lean();
+//   if (!event) throw new ApiError(404, "Event not found");
+
+//   const ticketCategoryObjectId = new Types.ObjectId(payload.ticketCategoryId);
+//   const ticketCategory = event.ticketCategories?.find(tc =>
+//     tc._id.equals(ticketCategoryObjectId)
+//   );
+//   if (!ticketCategory) throw new ApiError(400, "Invalid ticket category");
+
+//   const quantity = payload.quantity;
+//   if (!Number.isInteger(quantity) || quantity <= 0)
+//     throw new ApiError(400, "Invalid quantity");
+
+//   if (event.eventDate && new Date(event.eventDate) < new Date())
+//     throw new ApiError(400, "Event expired");
+
+//   const subtotalAmount = ticketCategory.pricePerTicket * quantity;
+//   const serviceFee = calculateServiceFee(user, subtotalAmount);
+//   const totalAmount = subtotalAmount + serviceFee;
+
+//   const orderCode = await getNextOrderCode();
+
+//   const order = await OrderModel.create({
+//     orderCode,
+//     userId: payload.userId,
+//     eventId: payload.eventId,
+//     ticketCategoryId: payload.ticketCategoryId,
+//     ticketType: ticketCategory.ticketName,
+//     quantity,
+//     subtotalAmount,
+//     serviceFee,
+//     totalAmount,
+//     contact: payload.contact,
+//     address: payload.address,
+//     status: ORDER_STATUS.PENDING,
+//     expiresAt: new Date(Date.now() + 2 * 60 * 1000),
+//   });
+
+//   return order;
+// };
+
+
 const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
   const user = await User.findById(payload.userId).lean();
   if (!user) throw new ApiError(404, "User not found");
 
-  const event = await EventModel.findById(payload.eventId).lean();
-  if (!event) throw new ApiError(404, "Event not found");
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  const ticketCategoryObjectId = new Types.ObjectId(payload.ticketCategoryId);
-  const ticketCategory = event.ticketCategories.find(tc =>
-    tc._id.equals(ticketCategoryObjectId)
-  );
-  if (!ticketCategory) throw new ApiError(400, "Invalid ticket category");
+  try {
+    const event = await EventModel.findById(payload.eventId).session(session);
+    if (!event) throw new ApiError(404, "Event not found");
 
-  const quantity = payload.quantity;
-  if (!Number.isInteger(quantity) || quantity <= 0)
-    throw new ApiError(400, "Invalid quantity");
+    const ticketCategoryObjectId = new Types.ObjectId(payload.ticketCategoryId);
+    const ticketCategory = event.ticketCategories?.find(tc =>
+      tc._id.equals(ticketCategoryObjectId)
+    );
+    if (!ticketCategory) throw new ApiError(400, "Invalid ticket category");
 
-  if (event.eventDate && new Date(event.eventDate) < new Date())
-    throw new ApiError(400, "Event expired");
+    const quantity = payload.quantity;
+    if (!Number.isInteger(quantity) || quantity <= 0)
+      throw new ApiError(400, "Invalid quantity");
 
-  const subtotalAmount = ticketCategory.pricePerTicket * quantity;
-  const serviceFee = calculateServiceFee(user, subtotalAmount);
-  const totalAmount = subtotalAmount + serviceFee;
+    if (event.eventDate && new Date(event.eventDate) < new Date())
+      throw new ApiError(400, "Event expired");
 
-  const orderCode = await getNextOrderCode();
+    // 🔐 ATOMIC RESERVE
+    const reserveRes = await EventModel.updateOne(
+      {
+        _id: payload.eventId,
+        "ticketCategories._id": ticketCategoryObjectId,
+        "ticketCategories.totalQuantity": { $gte: quantity },
+      },
+      {
+        $inc: {
+          "ticketCategories.$.totalQuantity": -quantity,
+          "ticketCategories.$.reservedQuantity": quantity,
+        },
+      },
+      { session }
+    );
 
-  const order = await OrderModel.create({
-    orderCode,
-    userId: payload.userId,
-    eventId: payload.eventId,
-    ticketCategoryId: payload.ticketCategoryId,
-    ticketType: ticketCategory.ticketName,
-    quantity,
-    subtotalAmount,
-    serviceFee,
-    totalAmount,
-    contact: payload.contact,
-    address: payload.address,
-    status: ORDER_STATUS.PENDING,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
+    if (reserveRes.modifiedCount === 0) {
+      throw new ApiError(400, "Tickets not available");
+    }
 
-  return order;
+    const subtotalAmount = ticketCategory.pricePerTicket * quantity;
+    const serviceFee = calculateServiceFee(user, subtotalAmount);
+    const totalAmount = subtotalAmount + serviceFee;
+
+    const orderCode = await getNextOrderCode();
+
+    const order = await OrderModel.create(
+      [
+        {
+          orderCode,
+          userId: payload.userId,
+          eventId: payload.eventId,
+          ticketCategoryId: payload.ticketCategoryId,
+          ticketType: ticketCategory.ticketName,
+          quantity,
+          subtotalAmount,
+          serviceFee,
+          totalAmount,
+          contact: payload.contact,
+          address: payload.address,
+          status: ORDER_STATUS.PENDING,
+          expiresAt: new Date(Date.now() + 2 * 60 * 1000),
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return order[0];
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 };
 
 /**

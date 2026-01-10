@@ -49,6 +49,8 @@ const createPaymentIntent = async (input: InitiatePaymentDto) => {
 
   await OrderModel.findByIdAndUpdate(order._id, {
     transactionId: transaction._id,
+    status: ORDER_STATUS.PAYMENT_INITIATED,
+    expiresAt: null,
   });
 
   return {

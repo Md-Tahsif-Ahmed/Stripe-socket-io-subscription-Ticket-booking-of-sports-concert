@@ -89,6 +89,11 @@ const orderSchema = new Schema<IOrder>(
       zip: { type: String, required: true },
       country: { type: String, required: true },
     },
+    paymentProcessed: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
 
     paymentIntentId: {
       type: String,
@@ -128,5 +133,6 @@ const orderSchema = new Schema<IOrder>(
  */
 orderSchema.index({ eventId: 1, status: 1 });
 orderSchema.index({ payoutProcessed: 1, status: 1 });
+orderSchema.index({ expiresAt: 1, status: 1 });
 
 export const OrderModel = model<IOrder>("Order", orderSchema);

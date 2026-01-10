@@ -3,7 +3,7 @@
   export enum ORDER_STATUS {
     PENDING = "pending",
     PAID = "paid",
-    ONGOING = "ongoing",
+    PAYMENT_INITIATED = "payment_initiated",
     COMPLETED = "completed",
     CANCELLED = "cancelled",
   }
@@ -34,6 +34,7 @@
       zip: string;
       country: string;
     };
+    paymentProcessed?: boolean;
     paymentIntentId?: string;
     isCancelled?: boolean;
     payoutProcessed?: boolean;
