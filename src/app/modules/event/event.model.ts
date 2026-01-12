@@ -35,6 +35,10 @@ const eventSchema = new Schema<IEvent>(
       required: true,
       index: true,
     },
+    // teamId: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: "Team",
+    // },
     category: {
       type: String,
       enum: Object.values(EventCategory),

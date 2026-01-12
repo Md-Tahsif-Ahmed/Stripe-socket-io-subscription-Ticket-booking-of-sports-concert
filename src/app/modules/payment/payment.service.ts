@@ -14,6 +14,7 @@ import { InitiatePaymentDto } from "./payment.interface";
 import { User } from "../user/user.model";
 import { OrderModel } from "../order/order.model";
 import { ORDER_STATUS } from "../order/order.interface";
+import { getNextTransactionCode } from "../../../util/orderOTPgenerate";
 
 const createPaymentIntent = async (input: InitiatePaymentDto) => {
   const { orderId, customerEmail, customerName } = input;
@@ -36,9 +37,10 @@ const createPaymentIntent = async (input: InitiatePaymentDto) => {
       enabled: true,
     },
   });
-
+   const transactionCode = getNextTransactionCode();
   // Create Transaction (PENDING)
   const transaction = await Transaction.create({
+    code: transactionCode,
     orderId: order._id,
     amount: order.totalAmount,
     currency: "usd",

@@ -255,9 +255,9 @@ const getAllOrdersFromDB = async (query: any) => {
   const baseQuery = OrderModel.find().populate("userId").populate("eventId");
 
   const queryBuilder = new QueryBuilder<IOrder>(baseQuery, query)
-    .search(["status"])
+    // .search(["status"])
     .filter()
-    .sort()
+    .sortByUI()
     .fields()
     .paginate();
 

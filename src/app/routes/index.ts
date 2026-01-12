@@ -15,6 +15,7 @@ import { RefundPolicyRoutes } from "../modules/refundPolicy/refund-policy.route"
 import { PrivacyRoutes } from "../modules/privacy/privacy-policy.route";
 import { TermsAndConditionsRoutes } from "../modules/terms/terms-and-conditions.route";
 import { MailAdminRoutes } from "../modules/mailAdmin/mailAdmin.routes";
+import { DashboardRoutes } from "../modules/dashboard/dashboard.routes";
 
 const router = express.Router();
 
@@ -88,6 +89,11 @@ const apiRoutes = [
     path: "/mail-admin",
     route: MailAdminRoutes,
   },
+
+  {
+    path: "/dashboard",
+    route: DashboardRoutes,
+  }
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

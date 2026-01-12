@@ -69,27 +69,39 @@ const getEventByIdFromDB = async (id: string): Promise<IEvent> => {
 };
 
 const getAllEventsFromDB = async (query: any) => {
+  const now = new Date();
+
   const baseQuery = EventModel.find().populate("artistId");
 
+  // status filter
+  if (query.type === "upcoming") {
+    query.eventDate = { $gt: now };
+  }
+
+  if (query.type === "completed") {
+    query.eventDate = { $lt: now };
+  }
+
+  if (query.type === "cancelled") {
+    query.status = "CANCELLED";
+  }
+
   const queryBuilder = new QueryBuilder<IEvent>(baseQuery, query)
-    .search(["title", "city", "venueName"])
+    .searchByTitle()
     .filter()
     .sort()
-    .fields()
-    .paginate();
+    .paginate()
+    .fields();
 
   const events = await queryBuilder.modelQuery;
   const meta = await queryBuilder.countTotal();
-
-  if (!events) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "No events found");
-  }
 
   return {
     data: events,
     meta,
   };
 };
+
 
 const deleteEventFromDB = async (id: string): Promise<IEvent> => {
   const event = await EventModel.findById(id);

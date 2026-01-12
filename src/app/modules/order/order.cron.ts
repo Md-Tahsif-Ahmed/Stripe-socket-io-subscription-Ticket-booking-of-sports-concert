@@ -30,6 +30,7 @@ const expirePendingOrders = async () => {
       );
 
       order.status = ORDER_STATUS.CANCELLED;
+      order.isCancelled = true;
       order.cancelledAt = new Date();
       await order.save({ session });
        // cancel related transaction

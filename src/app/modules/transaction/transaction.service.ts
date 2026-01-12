@@ -14,15 +14,15 @@ interface GetTransactionsQuery {
 }
 
 const getAllTransactions = async (query: GetTransactionsQuery) => {
-  const baseQuery = Transaction.find().populate("bookingId").populate({
-    path: "bookingId",
-    populate: { path: "carId userId hostId" },
+  const baseQuery = Transaction.find().populate("orderId").populate({
+    path: "orderId",
+    populate: { path: "eventId userId ticketCategoryId" },
   });
 
     ;
   const qb = new QueryBuilder(baseQuery, query);
 
-  qb.search(["_id", "bookingId", "method", "status", "stripePaymentIntentId"])
+  qb.search(["_id", "orderId", "method", "status", "stripePaymentIntentId"])
     .filter()
     .sort()
     .paginate()

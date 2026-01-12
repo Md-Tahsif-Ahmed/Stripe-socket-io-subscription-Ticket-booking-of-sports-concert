@@ -10,4 +10,15 @@ const getNextOrderCode = async () => {
   return `ORD-${String(counter.seq).padStart(6, "0")}`;
 };
 
-export { getNextOrderCode };
+
+const getNextTransactionCode = async () => {
+  const counter = await CounterModel.findOneAndUpdate(
+    { name: "transaction" },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+
+  return `TXN-${String(counter.seq).padStart(6, "0")}`;
+};
+
+export { getNextOrderCode, getNextTransactionCode };

@@ -33,7 +33,7 @@ const updateEventZodSchema = z.object({
     title: z.string().min(1).optional(),
     artistId: z.string().min(1).optional(),
     category: z.enum(Object.values(EventCategory) as [string, ...string[]]).optional(),
-    eventDate: z.coerce.date({ required_error: 'Event date is required' }),
+    eventDate: z.coerce.date().optional(),
 
     // startTime: z.string().min(1).optional(),
     city: z.string().min(1).optional(),

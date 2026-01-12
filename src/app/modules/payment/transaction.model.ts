@@ -31,6 +31,7 @@ export enum PayoutType {
 
 export interface ITransaction extends Document {
   orderId: Types.ObjectId | string;
+  code: string;
   amount: number;
   currency: string;
   method: PaymentMethod;
@@ -60,6 +61,7 @@ export interface ITransaction extends Document {
 const transactionSchema = new Schema<ITransaction>(
   {
     orderId: { type: Schema.Types.ObjectId, ref: "Order", required: true },
+    code: { type: String, required: true, unique: true, index: true },
     amount: { type: Number, required: true },
     currency: { type: String, default: "usd" },
     method: { type: String, enum: Object.values(PaymentMethod), default:  PaymentMethod.CARD },
