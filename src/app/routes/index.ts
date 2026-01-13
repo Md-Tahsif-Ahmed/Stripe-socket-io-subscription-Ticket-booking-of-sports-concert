@@ -16,6 +16,7 @@ import { PrivacyRoutes } from "../modules/privacy/privacy-policy.route";
 import { TermsAndConditionsRoutes } from "../modules/terms/terms-and-conditions.route";
 import { MailAdminRoutes } from "../modules/mailAdmin/mailAdmin.routes";
 import { DashboardRoutes } from "../modules/dashboard/dashboard.routes";
+import { TeamRoutes } from "../modules/team/team.routes";
 
 const router = express.Router();
 
@@ -35,6 +36,11 @@ const apiRoutes = [
   {
     path: "/artists",
     route: artistRoutes,
+  },
+  {
+    path: "/teams",
+    route: TeamRoutes,
+
   },
   {
     path: "/orders",

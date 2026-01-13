@@ -25,14 +25,23 @@ class QueryBuilder<T> {
     return this;
   }
 
+  // searchByTitle() {
+  //   if (this.query.search) {
+  //     this.modelQuery = this.modelQuery.find({
+  //       title: { $regex: this.query.search, $options: "i" },
+  //     } as FilterQuery<T>);
+  //   }
+  //   return this;
+  // }
   searchByTitle() {
-    if (this.query.search) {
-      this.modelQuery = this.modelQuery.find({
-        title: { $regex: this.query.search, $options: "i" },
-      } as FilterQuery<T>);
-    }
-    return this;
+  if (this.query.search) {
+    this.modelQuery = this.modelQuery.find({
+      $text: { $search: this.query.search },
+    } as FilterQuery<T>);
   }
+  return this;
+}
+
 
   filter() {
     const queryObj = { ...this.query };

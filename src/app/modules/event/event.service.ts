@@ -119,24 +119,31 @@ const deleteEventFromDB = async (id: string): Promise<IEvent> => {
   return result;
 };
 
-//
+ 
 
+ 
 // const getHomePageData = async () => {
-//   const topEvents = await EventModel.find({})
-//     .sort({ ticketSold: -1 })
-//     .limit(6);
+//   const [topEvents, featuredConcerts, featuredSports] = await Promise.all([
+//     EventModel.find({ })
+//       .sort({ ticketSold: -1 })
+//       .limit(6)
+//       .populate("artistId", "name genre "),
 
-//   const featuredConcerts = await EventModel.find({
-//     category: "concert",
-//   })
-//     .sort({ createdAt: -1 })
-//     .limit(6);
+//     EventModel.find({
+//       category: "Concert",
+      
+//     })
+//       .sort({ createdAt: -1 })
+//       .limit(6)
+//       .populate("artistId", "name image"),
 
-//   const featuredSports = await EventModel.find({
-//     category: "sports",
-//   })
-//     .sort({ createdAt: -1 })
-//     .limit(6);
+//     EventModel.find({
+//       category: "Sports",
+  
+//     })
+//       .sort({ createdAt: -1 })
+//       .limit(6),
+//   ]);
 
 //   return {
 //     topEvents,
@@ -144,36 +151,68 @@ const deleteEventFromDB = async (id: string): Promise<IEvent> => {
 //     featuredSports,
 //   };
 // };
-const getHomePageData = async () => {
-  const [topEvents, featuredConcerts, featuredSports] = await Promise.all([
-    EventModel.find({ })
+
+const getHomePageData = async (query: Record<string, any>) => {
+  const baseQuery = EventModel.find();
+
+  const qb = new QueryBuilder(baseQuery, query).searchByTitle();
+
+  const filter = qb.modelQuery.getFilter();
+
+  const [
+    topEvents,
+    featuredConcerts,
+    featuredSports,
+    totalEvents,
+    ticketAgg,
+  ] = await Promise.all([
+    EventModel.find(filter)
       .sort({ ticketSold: -1 })
       .limit(6)
-      .populate("artistId", "name genre "),
+      .populate("artistId", "name genre image")
+      .select("title thumbnail ticketSold eventDate city venueName"),
 
     EventModel.find({
-      category: "concert",
-      
+      ...filter,
+      category: "Concert",
     })
       .sort({ createdAt: -1 })
       .limit(6)
-      .populate("artistId", "name image"),
+      .populate("artistId", "name image")
+      .select("title thumbnail ticketSold eventDate city venueName"),
 
     EventModel.find({
-      category: "sports",
-  
+      ...filter,
+      category: "Sports",
     })
       .sort({ createdAt: -1 })
-      .limit(6),
+      .limit(6)
+      .select("title thumbnail ticketSold eventDate city venueName"),
+
+    EventModel.countDocuments(),
+
+    EventModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$ticketSold" },
+        },
+      },
+    ]),
   ]);
 
   return {
+    stats: {
+      totalEvents,
+      totalTicketsSold: ticketAgg[0]?.total || 0,
+    },
     topEvents,
     featuredConcerts,
     featuredSports,
   };
 };
 
+ 
 
 export const EventService = {
   createEventToDB,

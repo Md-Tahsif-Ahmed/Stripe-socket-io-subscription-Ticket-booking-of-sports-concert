@@ -18,6 +18,10 @@ const router = Router();
 
 // get all events
 router.get("/", EventController.getAllEvents);
+
+// get homepage data
+router.get("/homepage", EventController.getHomePageData);
+
 // create event (admin only)
 router.post(
   "/",

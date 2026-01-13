@@ -4,7 +4,7 @@ import config from "../config";
 import { OrderModel } from "../app/modules/order/order.model";
 import { ORDER_STATUS } from "../app/modules/order/order.interface";
 import { EventModel } from "../app/modules/event/event.model";
-import Transaction, { TransactionStatus } from "../app/modules/payment/transaction.model";
+import Transaction, { RefundStatus, TransactionStatus } from "../app/modules/payment/transaction.model";
 
 const handlePaymentWebhook = async (rawBody: Buffer, sig: string) => {
   const event = Stripe.webhooks.constructEvent(
@@ -91,6 +91,22 @@ const handlePaymentWebhook = async (rawBody: Buffer, sig: string) => {
       session.endSession();
     }
   }
+
+  // ================= REFUND =================
+  if (event.type === "charge.refunded") {
+  const charge = event.data.object as Stripe.Charge;
+
+  await Transaction.findOneAndUpdate(
+    { stripeChargeId: charge.id },
+    {
+      refundStatus: RefundStatus.SUCCEEDED,
+      refundedAt: new Date(),
+    }
+  );
+
+  return true;
+}
+
 };
 
 export { handlePaymentWebhook };

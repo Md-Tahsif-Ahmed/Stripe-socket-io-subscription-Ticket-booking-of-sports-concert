@@ -35,7 +35,8 @@ export interface IEvent {
   thumbnail?: string; // URL
   seatingView?: string; // URL
   title: string;
-  artistId: Types.ObjectId; // Ref to Artist model
+  artistId: Types.ObjectId | null; // Ref to Artist model
+  teamId?: Types.ObjectId | null; // Ref to Team model
   category: EventCategory;
   eventDate: Date;
   // startTime: string; // e.g., '08:00 PM'

@@ -15,6 +15,7 @@ import { User } from "../user/user.model";
 import { OrderModel } from "../order/order.model";
 import { ORDER_STATUS } from "../order/order.interface";
 import { getNextTransactionCode } from "../../../util/orderOTPgenerate";
+import mongoose from "mongoose";
 
 const createPaymentIntent = async (input: InitiatePaymentDto) => {
   const { orderId, customerEmail, customerName } = input;
@@ -218,54 +219,56 @@ const createMembershipCheckoutSession = async (userId: string) => {
 //   });
 // };
 
-// // ================ Refund  =================
+// ================ Refund Order Payment =================
 
-// const refundBookingPayment = async (
-//   booking: any,
-//   transaction: any,
-//   refundPercentage: number,
-//   session: mongoose.ClientSession
-// ) => {
-//   if (!transaction.stripeChargeId) {
-//     throw new Error("Stripe charge not found");
-//   }
+const refundOrderPayment = async (
+  order: any,
+  transaction: any,
+  refundPercentage: number,
+  session: mongoose.ClientSession
+) => {
+  if (!transaction.stripeChargeId) {
+    throw new Error("Stripe charge not found");
+  }
 
-//   const refundAmountInCents = Math.round(
-//     transaction.amount * refundPercentage * 100
-//   );
+  const refundAmountInCents = Math.round(
+    transaction.amount * refundPercentage * 100
+  );
 
-//   //  Stripe call (EXTERNAL)
-//   const refund = await stripe.refunds.create(
-//     {
-//       charge: transaction.stripeChargeId,
-//       amount: refundAmountInCents,
-//     },
-//     {
-//       idempotencyKey: `refund_${booking._id}`,
-//     }
-//   );
+  // Stripe call
+  const refund = await stripe.refunds.create(
+    {
+      charge: transaction.stripeChargeId,
+      amount: refundAmountInCents,
+    },
+    {
+      idempotencyKey: `refund_order_${order._id}`,
+    }
+  );
 
-//   //  DB update (ATOMIC via session)
-//   transaction.refundId = refund.id;
-//   transaction.refundAmount = refundAmountInCents / 100;
-//   transaction.refundStatus = RefundStatus.PENDING;
-//   transaction.status = TransactionStatus.CANCELED;
+  // Transaction update
+  transaction.refundId = refund.id;
+  transaction.refundAmount = refundAmountInCents / 100;
+  transaction.refundStatus = RefundStatus.PENDING;
+  transaction.status = TransactionStatus.CANCELLED;
 
-//   await transaction.save({ session });
+  await transaction.save({ session });
 
-//   //  Optional but useful response
-//   return {
-//     refundId: refund.id,
-//     refundAmount: refundAmountInCents / 100,
-//     refundPercentage: refundPercentage * 100,
-//   };
-// };
+  return {
+    refundId: refund.id,
+    refundAmount: refundAmountInCents / 100,
+    refundPercentage: refundPercentage * 100,
+  };
+};
+
+ 
 
 // -------- Export as object ----------
 
 export const PaymentService = {
   createPaymentIntent,
   createMembershipCheckoutSession,
+  refundOrderPayment,
   // payoutToHost,
-  // refundBookingPayment,
+ 
 };

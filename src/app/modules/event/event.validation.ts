@@ -14,7 +14,8 @@ const createEventZodSchema = z.object({
     thumbnail: z.string().optional(),
     seatingChart: z.string().optional(),
     title: z.string({ required_error: 'Title is required' }),
-    artistId: z.string({ required_error: 'Artist ID is required' }),
+    artistId: z.string({ required_error: 'Artist ID is required' }).optional(),
+    teamId: z.string({ required_error: 'Team ID is required' }).optional(),
     category: z.enum(Object.values(EventCategory) as [string, ...string[]]),
     eventDate: z.coerce.date({ required_error: 'Event date is required' }),
     // startTime: z.string({ required_error: 'Start time is required' }),
@@ -32,6 +33,7 @@ const updateEventZodSchema = z.object({
     seatingChart: z.string().optional(),
     title: z.string().min(1).optional(),
     artistId: z.string().min(1).optional(),
+    teamId: z.string().min(1).optional(),
     category: z.enum(Object.values(EventCategory) as [string, ...string[]]).optional(),
     eventDate: z.coerce.date().optional(),
 

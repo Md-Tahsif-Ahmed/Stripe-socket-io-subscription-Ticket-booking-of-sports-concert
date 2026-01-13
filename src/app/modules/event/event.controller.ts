@@ -69,16 +69,18 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Home Page Data Retrieval
-const getHomePageData = catchAsync(async (req: Request, res: Response) => {
-  const result = await EventService.getHomePageData();
+const getHomePageData = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await EventService.getHomePageData(req.query);
 
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: "Home page data retrieved successfully",
-    data: result,
-  });
-});
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Home page data retrieved successfully",
+      data: result,
+    });
+  }
+);
 
 export const EventController = {
     createEvent,

@@ -32,13 +32,13 @@ const eventSchema = new Schema<IEvent>(
     artistId: {
       type: Schema.Types.ObjectId,
       ref: "Artist",
-      required: true,
       index: true,
     },
-    // teamId: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Team",
-    // },
+    teamId: {
+      type: Schema.Types.ObjectId,
+      ref: "Team",
+      index: true,
+    },
     category: {
       type: String,
       enum: Object.values(EventCategory),
@@ -61,12 +61,33 @@ const eventSchema = new Schema<IEvent>(
   { timestamps: true }
 );
 
+
+// Custom validation to ensure only one of artistId or teamId is provided based on category
+eventSchema.pre("save", function (next) {
+  if (this.category === EventCategory.CONCERT) {
+    if (!this.artistId) {
+      return next(new Error("Artist ID is required for concerts"));
+    }
+    this.teamId = null; // Ensure teamId is not set for concerts
+  } else if (this.category === EventCategory.SPORTS) {
+    if (!this.teamId) {
+      return next(new Error("Team ID is required for sports events"));
+    }
+    this.artistId = null; // Ensure artistId is not set for sports
+  }
+  next();
+});
+
+
+
 // Indexes for optimized queries
 /* ---------------- INDEX STRATEGY ---------------- */
 
 // Event details / artist page
 eventSchema.index({ artistId: 1 });
 eventSchema.index({ artistId: 1, eventDate: 1 });
+eventSchema.index({ teamId: 1 });
+eventSchema.index({ teamId: 1, eventDate: 1 });
 // Homepage: Top Events
 eventSchema.index({ ticketSold: -1, createdAt: -1 });
 
@@ -78,5 +99,7 @@ eventSchema.index({ category: 1, eventDate: 1 });
 
 // City wise browsing
 eventSchema.index({ city: 1, eventDate: 1 });
+// Text index for searching by title
+eventSchema.index({ title: "text" });
 
 export const EventModel: Model<IEvent> = model<IEvent>("Event", eventSchema);

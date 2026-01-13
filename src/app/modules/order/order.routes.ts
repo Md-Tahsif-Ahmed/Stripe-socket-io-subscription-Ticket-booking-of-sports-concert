@@ -57,4 +57,16 @@ router
     OrderController.deleteOrder
   );
 
+  // ================ Cancel Order with Refund =====================
+  router.patch(
+  "/cancel/:id",
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.USER
+  ),
+  OrderController.cancelOrderController
+);
+
+
 export const OrderRoutes = router;

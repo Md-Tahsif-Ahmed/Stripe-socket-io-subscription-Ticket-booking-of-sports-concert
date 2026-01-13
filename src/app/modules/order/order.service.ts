@@ -8,6 +8,8 @@ import { User } from "../user/user.model";
 import { EventModel } from "../event/event.model";
 import { calculateServiceFee } from "../../../util/serviceFeeCalculation";
 import { getNextOrderCode } from "../../../util/orderOTPgenerate";
+import Transaction from "../payment/transaction.model";
+import { PaymentService } from "../payment/payment.service";
 
 /**
  * CREATE ORDER
@@ -119,7 +121,6 @@ import { getNextOrderCode } from "../../../util/orderOTPgenerate";
 //   }
 // };
 
-
 // const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
 //   const user = await User.findById(payload.userId).lean();
 //   if (!user) throw new ApiError(404, "User not found");
@@ -165,7 +166,6 @@ import { getNextOrderCode } from "../../../util/orderOTPgenerate";
 //   return order;
 // };
 
-
 const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
   const user = await User.findById(payload.userId).lean();
   if (!user) throw new ApiError(404, "User not found");
@@ -178,7 +178,7 @@ const createOrderToDB = async (payload: IOrder): Promise<IOrder> => {
     if (!event) throw new ApiError(404, "Event not found");
 
     const ticketCategoryObjectId = new Types.ObjectId(payload.ticketCategoryId);
-    const ticketCategory = event.ticketCategories?.find(tc =>
+    const ticketCategory = event.ticketCategories?.find((tc) =>
       tc._id.equals(ticketCategoryObjectId)
     );
     if (!ticketCategory) throw new ApiError(400, "Invalid ticket category");
@@ -354,6 +354,82 @@ const getMyOrdersFromDB = async (userId: string, query: any) => {
   };
 };
 
+// cancel order service
+
+const cancelOrder = async (orderId: string) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const order = await OrderModel.findById(orderId).session(session);
+    if (!order) throw new Error("Order not found");
+
+    if (order.isCancelled) throw new Error("Order already cancelled");
+
+    // Check if eventDate is passed
+    const event = await EventModel.findById(order.eventId).session(session);
+    if (!event) throw new Error("Event not found");
+
+    const currentDate = new Date();
+    if (currentDate > new Date(event.eventDate)) {
+      throw new Error("Order cannot be cancelled after the event date");
+    }
+
+    if (order.status === ORDER_STATUS.PAID) {
+      if (order.payoutProcessed)
+        throw new Error("Refund not allowed after payout");
+
+      const transaction = await Transaction.findById(
+        order.transactionId
+      ).session(session);
+
+      if (!transaction) throw new Error("Transaction not found");
+
+      const refundPercentage = 1; // full refund
+
+      // Refund process
+      await PaymentService.refundOrderPayment(
+        order,
+        transaction,
+        refundPercentage,
+        session
+      );
+
+      // Directly update ticketSold and quantity
+      await EventModel.updateOne(
+        {
+          _id: order.eventId,
+          "ticketCategories._id": order.ticketCategoryId,
+          ticketSold: { $gte: order.quantity }, // Ensure ticketSold can be decremented
+        },
+        {
+          $inc: {
+            ticketSold: -order.quantity, // Decrease ticketSold (refunds)
+            "ticketCategories.$.quantity": order.quantity, // Increase quantity in ticket categories for new availability
+          },
+        },
+        { session }
+      );
+    }
+
+    // Mark order as cancelled
+    order.isCancelled = true;
+    order.status = ORDER_STATUS.CANCELLED;
+    order.cancelledAt = new Date();
+
+    await order.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return order;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const OrderService = {
   createOrderToDB,
   getAllOrdersFromDB,
@@ -361,4 +437,5 @@ export const OrderService = {
   updateOrderToDB,
   deleteOrderFromDB,
   getMyOrdersFromDB,
+  cancelOrder,
 };

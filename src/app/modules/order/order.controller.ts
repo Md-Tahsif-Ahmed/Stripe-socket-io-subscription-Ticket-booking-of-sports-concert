@@ -82,6 +82,21 @@ const getMyOrders = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// cencell order with refund
+const cancelOrderController = catchAsync(async (req: Request, res: Response) => {
+  const orderId = req.params.id;
+
+  const result = await OrderService.cancelOrder(orderId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Order cancelled and refund processed",
+    data: result,
+  });
+});
+
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -89,4 +104,5 @@ export const OrderController = {
   updateOrder,
   deleteOrder,
   getMyOrders,
+  cancelOrderController,
 };

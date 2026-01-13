@@ -79,10 +79,6 @@ const getAllTeamsFromDB = async (query: any) => {
       image: 1,
       genre: 1,
       isVerified: 1,
-      instagram: 1,
-      twitter: 1,
-      facebook: 1,
-      website: 1,
     }
   ).sort({ name: 1 });
 
@@ -112,7 +108,7 @@ const getAllTeamsFromDB = async (query: any) => {
 
 
   const events = await EventModel.find({
-    TeamId: Team._id,
+    teamId: Team._id,
     eventDate: { $gte: now },
   })
     .select(
@@ -149,8 +145,6 @@ export const TeamService = {
   createTeamToDB,
   updateTeamToDB,
   getAllTeamsFromDB,
-
   getTeamByIdFromDB,
-
   deleteTeamFromDB,
 };

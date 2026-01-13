@@ -7,10 +7,6 @@ const TeamSchema = new Schema<ITeam>(
     name: { type: String, required: true, unique: true, trim: true },
     genre: { type: String, enum: Object.values(TeamGenre), required: true },
     bio: { type: String },
-    instagram: { type: String },
-    twitter: { type: String },
-    facebook: { type: String },
-    website: { type: String },
     isVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
