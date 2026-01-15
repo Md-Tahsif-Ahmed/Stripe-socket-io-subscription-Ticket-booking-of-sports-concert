@@ -19,6 +19,13 @@ const requireAnyUser = auth(
   USER_ROLES.USER
 );
 
+router.post(
+  "/reserve-ticket",
+  requireUser,
+  // validateRequest(OrderValidation.createOrderZodSchema),
+  OrderController.reserveTicket
+);
+
 /* ---------------------------- ORDER CREATE ---------------------------- */
 router.post(
   "/",

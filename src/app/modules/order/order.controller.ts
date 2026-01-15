@@ -5,6 +5,22 @@ import sendResponse from "../../../shared/sendResponse";
 import { OrderService } from "./order.service";
 import { Types } from "mongoose";
 
+const reserveTicket = catchAsync(async (req: Request, res: Response) => {
+    const payload = {
+      ...req.body,
+      userId: new Types.ObjectId(req.user.id),
+      
+    };
+  const result = await OrderService.reserveTicketToDB(payload);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "reserve ticket successfully",
+    data: result,
+  });
+});
+
 const createOrder = catchAsync(async (req: Request, res: Response) => {
     const payload = {
       ...req.body,
@@ -98,6 +114,7 @@ const cancelOrderController = catchAsync(async (req: Request, res: Response) => 
 
 
 export const OrderController = {
+  reserveTicket,
   createOrder,
   getAllOrders,
   getOrderById,

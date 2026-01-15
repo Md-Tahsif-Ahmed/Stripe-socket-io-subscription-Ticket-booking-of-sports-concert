@@ -16,7 +16,7 @@
     const card = elements.create("card");
     card.mount("#card-element");
 
-    const clientSecret = "pi_3So10QCwX9AIVtdm1VnROB6E_secret_MqnCAHyLtq4hlPVx682IJtUhG";
+    const clientSecret = "pi_3SppNWCwX9AIVtdm1nkMwBsO_secret_vdllkTUnJs1pVC8MYrZ1Z4nXH";
 
     document.getElementById("pay").onclick = async () => {
       const result = await stripe.confirmCardPayment(clientSecret, {

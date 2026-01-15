@@ -70,10 +70,10 @@ const orderSchema = new Schema<IOrder>(
       index: true,
     },
 
-    expiresAt: {
-      type: Date,
-      index: true,
-    },
+    // expiresAt: {
+    //   type: Date,
+    //   index: true,
+    // },
 
     contact: {
       name: { type: String, required: true },

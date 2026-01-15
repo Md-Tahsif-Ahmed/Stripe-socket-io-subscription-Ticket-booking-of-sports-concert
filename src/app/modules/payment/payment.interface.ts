@@ -3,9 +3,10 @@
 
 export interface InitiatePaymentDto {
   orderId: string;
-  customerEmail: string;
-  customerName: string;
+  customerEmail?: string;
+  customerName?: string;
   customerPhone?: string;
+  orderCode?: string;
 }
 
 export interface PaymentIntentResponse {

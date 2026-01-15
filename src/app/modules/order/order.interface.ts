@@ -20,7 +20,7 @@
     serviceFee: number;
     totalAmount: number;    
     status: ORDER_STATUS;
-    expiresAt?: Date;
+    // expiresAt?: Date;
     contact: {
       name: string;
       email: string;

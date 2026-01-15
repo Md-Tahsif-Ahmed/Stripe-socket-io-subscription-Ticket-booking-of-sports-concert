@@ -34,7 +34,17 @@ const eventSchema = new Schema<IEvent>(
       ref: "Artist",
       index: true,
     },
-    teamId: {
+    // teamId: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: "Team",
+    //   index: true,
+    // },
+    teamA: {
+      type: Schema.Types.ObjectId,
+      ref: "Team",
+      index: true,
+    },
+    teamB: {
       type: Schema.Types.ObjectId,
       ref: "Team",
       index: true,
@@ -68,12 +78,13 @@ eventSchema.pre("save", function (next) {
     if (!this.artistId) {
       return next(new Error("Artist ID is required for concerts"));
     }
-    this.teamId = null; // Ensure teamId is not set for concerts
+    this.teamA = undefined;
+    this.teamB = undefined; // Ensure teamId is not set for concerts
   } else if (this.category === EventCategory.SPORTS) {
-    if (!this.teamId) {
-      return next(new Error("Team ID is required for sports events"));
+    if (!this.teamA || !this.teamB) {
+      return next(new Error("Team A and Team B are required for sports events"));
     }
-    this.artistId = null; // Ensure artistId is not set for sports
+    this.artistId = undefined; // Ensure artistId is not set for sports
   }
   next();
 });

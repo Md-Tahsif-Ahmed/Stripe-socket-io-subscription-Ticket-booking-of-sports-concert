@@ -32,13 +32,14 @@ const createPaymentIntent = async (input: InitiatePaymentDto) => {
     receipt_email: customerEmail,
     metadata: {
       orderId: order._id.toString(),
-      customerName,
+      orderCode: order.orderCode,
+      customerName: order.contact.name,
     },
     automatic_payment_methods: {
       enabled: true,
     },
   });
-   const transactionCode = getNextTransactionCode();
+   const transactionCode = await getNextTransactionCode();
   // Create Transaction (PENDING)
   const transaction = await Transaction.create({
     code: transactionCode,
@@ -53,7 +54,6 @@ const createPaymentIntent = async (input: InitiatePaymentDto) => {
   await OrderModel.findByIdAndUpdate(order._id, {
     transactionId: transaction._id,
     status: ORDER_STATUS.PAYMENT_INITIATED,
-    expiresAt: null,
   });
 
   return {

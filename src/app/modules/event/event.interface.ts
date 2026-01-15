@@ -35,8 +35,10 @@ export interface IEvent {
   thumbnail?: string; // URL
   seatingView?: string; // URL
   title: string;
-  artistId: Types.ObjectId | null; // Ref to Artist model
-  teamId?: Types.ObjectId | null; // Ref to Team model
+  artistId?: Types.ObjectId | undefined; // Ref to Artist model
+  // teamId?: Types.ObjectId | undefined; // Ref to Team model
+  teamA?: Types.ObjectId | undefined; // Ref to Team model
+  teamB?: Types.ObjectId | undefined; // Ref to Team model
   category: EventCategory;
   eventDate: Date;
   // startTime: string; // e.g., '08:00 PM'

@@ -1,49 +1,75 @@
 import mongoose from "mongoose";
+import { RESERVE_STATUS, ReserveModel } from "./reserve.model";
+import { EventModel } from "../event/event.model";
 import { OrderModel } from "./order.model";
 import { ORDER_STATUS } from "./order.interface";
-import { EventModel } from "../event/event.model";
 import Transaction, { TransactionStatus } from "../payment/transaction.model";
 
-const expirePendingOrders = async () => {
-  const expiredOrders = await OrderModel.find({
-    status: ORDER_STATUS.PENDING,
+const expireReserves = async () => {
+  const expiredReserves = await ReserveModel.find({
+    status: RESERVE_STATUS.ACTIVE,
     expiresAt: { $lt: new Date() },
   });
 
-  for (const order of expiredOrders) {
+  for (const reserve of expiredReserves) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
+      // 1️⃣ Release ticket quantity back to event
       await EventModel.updateOne(
         {
-          _id: order.eventId,
-          "ticketCategories._id": order.ticketCategoryId,
+          _id: reserve.eventId,
+          "ticketCategories._id": reserve.ticketCategoryId,
         },
         {
           $inc: {
-            "ticketCategories.$.reservedQuantity": -order.quantity,
-            "ticketCategories.$.totalQuantity": order.quantity,
+            "ticketCategories.$.totalQuantity": reserve.reserve,
           },
         },
         { session }
       );
 
-      order.status = ORDER_STATUS.CANCELLED;
-      order.isCancelled = true;
-      order.cancelledAt = new Date();
-      await order.save({ session });
-       // cancel related transaction
-      await Transaction.updateMany(
-        {
-          orderId: order._id,
-          status: TransactionStatus.PENDING,
-        },
-        {
-          status: TransactionStatus.CANCELLED,
-        },
-        { session }
-      );
+      // 2️⃣ Cancel related order (if exists & unpaid)
+      if (reserve.orderId) {
+        await OrderModel.updateOne(
+          {
+            _id: reserve.orderId,
+            status: {
+              $in: [
+                ORDER_STATUS.PENDING,
+                ORDER_STATUS.PAYMENT_INITIATED,
+              ],
+            },
+          },
+          {
+            $set: {
+              status: ORDER_STATUS.CANCELLED,
+              isCancelled: true,
+              cancelledAt: new Date(),
+            },
+          },
+          { session }
+        );
+
+        // 3️⃣ Cancel related transactions
+        await Transaction.updateMany(
+          {
+            orderId: reserve.orderId,
+            status: TransactionStatus.PENDING,
+          },
+          {
+            $set: {
+              status: TransactionStatus.CANCELLED,
+            },
+          },
+          { session }
+        );
+      }
+
+      // 4️⃣ Mark reserve as released
+      reserve.status = RESERVE_STATUS.RELEASED;
+      await reserve.save({ session });
 
       await session.commitTransaction();
     } catch (e) {
@@ -54,4 +80,5 @@ const expirePendingOrders = async () => {
     }
   }
 };
-export { expirePendingOrders };
+
+export { expireReserves };
