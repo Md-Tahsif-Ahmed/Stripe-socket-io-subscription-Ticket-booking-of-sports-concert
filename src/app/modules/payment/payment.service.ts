@@ -30,6 +30,7 @@ const createPaymentIntent = async (input: InitiatePaymentDto) => {
     amount: Math.round(order.totalAmount * 100),
     currency: "usd",
     receipt_email: customerEmail,
+    
     metadata: {
       orderId: order._id.toString(),
       orderCode: order.orderCode,

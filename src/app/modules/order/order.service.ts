@@ -38,23 +38,44 @@ const reserveTicketToDB = async (payload: {
     if (!Number.isInteger(payload.reserve) || payload.reserve <= 0)
       throw new ApiError(400, "Invalid quantity");
 
-    // 🔢 check availability
-    const available =
-      ticketCategory.totalQuantity;
-    if (available < payload.reserve)
-      throw new ApiError(400, "Tickets not available");
+    // // 🔢 check availability
+    // const available =
+    //   ticketCategory.totalQuantity;
+    // if (available < payload.reserve)
+    //   throw new ApiError(400, "Tickets not available");
 
-    // 🔐 update Event  totalQuantity
-    await EventModel.updateOne(
-      { _id: event._id, "ticketCategories._id": ticketCategoryObjectId },
-      {
-        $inc: {
-          "ticketCategories.$.totalQuantity": -payload.reserve,
-          // "ticketCategories.$.reservedQuantity": payload.quantity,
-        },
-      },
-      { session }
-    );
+    // // 🔐 update Event  totalQuantity
+    // await EventModel.updateOne(
+    //   { _id: event._id, "ticketCategories._id": ticketCategoryObjectId,
+    //     "ticketCategories.totalQuantity": { $gte: payload.reserve }
+    //    },
+    //   {
+    //     $inc: {
+    //       "ticketCategories.$.totalQuantity": -payload.reserve,
+    //       // "ticketCategories.$.reservedQuantity": payload.quantity,
+    //     },
+    //   },
+    //   { session }
+    // );
+    const updateRes = await EventModel.updateOne(
+  {
+    _id: event._id,
+    "ticketCategories._id": ticketCategoryObjectId,
+    "ticketCategories.totalQuantity": { $gte: payload.reserve },
+  },
+  {
+    $inc: {
+      "ticketCategories.$.totalQuantity": -payload.reserve,
+      "ticketCategories.$.reservedQuantity": payload.reserve,
+    },
+  },
+  { session }
+);
+
+if (updateRes.modifiedCount === 0) {
+  throw new ApiError(400, "Tickets not available");
+}
+
 
     // 🔹 create Reserve document
     const reserve = await ReserveModel.create(
@@ -64,7 +85,7 @@ const reserveTicketToDB = async (payload: {
           eventId: payload.eventId,
           ticketCategoryId: payload.ticketCategoryId,
           reserve: payload.reserve,
-          expiresAt: new Date(Date.now() + 2 * 60 * 1000), // 10 min
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 min
         },
       ],
       { session }
