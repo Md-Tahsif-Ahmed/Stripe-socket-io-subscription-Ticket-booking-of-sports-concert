@@ -2,11 +2,11 @@ import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import { StatusCodes } from "http-status-codes";
 import { Morgan } from "./shared/morgan";
-import router from "../src/app/routes";
 import globalErrorHandler from "./app/middlewares/globalErrorHandler";
 import path from "path";
 import { PaymentController } from "./app/modules/payment/payment.controller";
 import { globalRateLimiter } from "./app/middlewares/rateLimiter";
+import router from "./app/routes";
 
 const app: Application = express();
 
