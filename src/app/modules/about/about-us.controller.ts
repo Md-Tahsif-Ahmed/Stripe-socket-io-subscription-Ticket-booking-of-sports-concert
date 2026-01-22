@@ -6,7 +6,7 @@ import { IAboutUs } from './about-us.interface';
 
 const createAboutUs = catchAsync(async (req: Request, res: Response) => {
   const payload: IAboutUs = req.body;                
-  const result = await AboutUsService.createAboutUsToDB(payload);
+  const result = await AboutUsService.upsertAboutUsToDB(payload);
 
   sendResponse(res, {
     statusCode: 201,                                  
@@ -16,18 +16,18 @@ const createAboutUs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateAboutUs = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const payload: Partial<IAboutUs> = req.body;         
-  const result = await AboutUsService.updateAboutUsToDB(id, payload);
+// const updateAboutUs = catchAsync(async (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const payload: Partial<IAboutUs> = req.body;         
+//   const result = await AboutUsService.updateAboutUsToDB(id, payload);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'About Us Updated Successfully',
-    data: result,
-  });
-});
+//   sendResponse(res, {
+//     statusCode: 200,
+//     success: true,
+//     message: 'About Us Updated Successfully',
+//     data: result,
+//   });
+// });
 
 const getAboutUs = catchAsync(async (_req: Request, res: Response) => {
   const result = await AboutUsService.getAboutUsFromDB();
@@ -54,7 +54,7 @@ const deleteAboutUs = catchAsync(async (req: Request, res: Response) => {
 
 export const AboutUsController = {
   createAboutUs,
-  updateAboutUs,
+  // updateAboutUs,
   getAboutUs,
   deleteAboutUs,
 };

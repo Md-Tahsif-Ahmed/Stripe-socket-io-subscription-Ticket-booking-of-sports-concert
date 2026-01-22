@@ -4,35 +4,45 @@ import mongoose from "mongoose";
 import { IRefundPolicy } from "./refund-policy.interface";
 import { RefundPolicy } from "./refund-policy.model";
 
-const createRefundPolicyToDB = async (payload: IRefundPolicy): Promise<IRefundPolicy> => {
-  const doc = await RefundPolicy.create(payload);
-  if (!doc) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to create Refund Policy");
-  }
-  return doc;
-};
-
-const updateRefundPolicyToDB = async (
-  id: string,
-  payload: Partial<IRefundPolicy>
+const upsertRefundPolicyToDB = async (
+  payload: IRefundPolicy,
 ): Promise<IRefundPolicy> => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid ID");
+  const existingRefundPolicy = await RefundPolicy.findOne();
+
+  if (existingRefundPolicy) {
+    const updatedRefundPolicy = await RefundPolicy.findByIdAndUpdate(
+      existingRefundPolicy._id,
+      payload,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!updatedRefundPolicy) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Failed to update Refund Policy",
+      );
+    }
+
+    return updatedRefundPolicy;
   }
 
-  const updated = await RefundPolicy.findByIdAndUpdate(id, payload, {
-    new: true,
-    runValidators: true,
-  });
+  const createdRefundPolicy = await RefundPolicy.create(payload);
 
-  if (!updated) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Refund Policy not found");
+  if (!createdRefundPolicy) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to create Refund Policy",
+    );
   }
-  return updated;
+
+  return createdRefundPolicy;
 };
 
-const getRefundPolicyFromDB = async (): Promise<IRefundPolicy[]> => {
-  return await RefundPolicy.find({}).lean();
+const getRefundPolicyFromDB = async (): Promise<IRefundPolicy | null> => {
+  return await RefundPolicy.findOne().lean();
 };
 
 const deleteRefundPolicyToDB = async (id: string): Promise<void> => {
@@ -46,8 +56,7 @@ const deleteRefundPolicyToDB = async (id: string): Promise<void> => {
 };
 
 export const RefundPolicyService = {
-  createRefundPolicyToDB,
-  updateRefundPolicyToDB,
+  upsertRefundPolicyToDB,
   getRefundPolicyFromDB,
   deleteRefundPolicyToDB,
 };

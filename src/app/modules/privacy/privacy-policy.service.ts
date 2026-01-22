@@ -4,35 +4,44 @@ import mongoose from "mongoose";
 import { IPrivacy } from "./privacy-policy.interface";
 import { Privacy } from "./privacy-policy.model";
 
-const createPrivacyToDB = async (payload: IPrivacy): Promise<IPrivacy> => {
-  const doc = await Privacy.create(payload);
-  if (!doc) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Failed to create Privacy");
+const upsertPrivacyToDB = async (payload: IPrivacy): Promise<IPrivacy> => {
+  const existingPrivacy = await Privacy.findOne();
+
+  if (existingPrivacy) {
+    const updatedPrivacy = await Privacy.findByIdAndUpdate(
+      existingPrivacy._id,
+      payload,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!updatedPrivacy) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Failed to update Privacy Policy",
+      );
+    }
+
+    return updatedPrivacy;
   }
-  return doc;
+
+
+  const createdPrivacy = await Privacy.create(payload);
+
+  if (!createdPrivacy) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to create Privacy Policy",
+    );
+  }
+
+  return createdPrivacy;
 };
 
-const updatePrivacyToDB = async (
-  id: string,
-  payload: Partial<IPrivacy>
-): Promise<IPrivacy> => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid ID");
-  }
-
-  const updated = await Privacy.findByIdAndUpdate(id, payload, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!updated) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Privacy not found");
-  }
-  return updated;
-};
-
-const getPrivacyFromDB = async (): Promise<IPrivacy[]> => {
-  return await Privacy.find({}).lean();
+const getPrivacyFromDB = async (): Promise<IPrivacy | null> => {
+  return await Privacy.findOne().lean();
 };
 
 const deletePrivacyToDB = async (id: string): Promise<void> => {
@@ -46,8 +55,7 @@ const deletePrivacyToDB = async (id: string): Promise<void> => {
 };
 
 export const PrivacyService = {
-  createPrivacyToDB,
-  updatePrivacyToDB,
+  upsertPrivacyToDB,
   getPrivacyFromDB,
   deletePrivacyToDB,
 };

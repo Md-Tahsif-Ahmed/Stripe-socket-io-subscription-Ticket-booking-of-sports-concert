@@ -7,7 +7,7 @@ import { ITermsAndConditions } from './terms-and-conditions.interface';
 
 const createTermsAndConditions = catchAsync(async (req: Request, res: Response) => {
   const payload: ITermsAndConditions = req.body;
-  const result = await TermsAndConditionsService.createTermsAndConditionsToDB(payload);
+  const result = await TermsAndConditionsService.upsertTermsAndConditionsToDB(payload);
 
   sendResponse(res, {
     statusCode: 201,                         
@@ -17,18 +17,18 @@ const createTermsAndConditions = catchAsync(async (req: Request, res: Response) 
   });
 });
 
-const updateTermsAndConditions = catchAsync(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const payload: Partial<ITermsAndConditions> = req.body;  
-  const result = await TermsAndConditionsService.updateTermsAndConditionsToDB(id, payload);
+// const updateTermsAndConditions = catchAsync(async (req: Request, res: Response) => {
+//   const id = req.params.id;
+//   const payload: Partial<ITermsAndConditions> = req.body;  
+//   const result = await TermsAndConditionsService.updateTermsAndConditionsToDB(id, payload);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'Terms and Conditions Updated Successfully',
-    data: result
-  });
-});
+//   sendResponse(res, {
+//     statusCode: 200,
+//     success: true,
+//     message: 'Terms and Conditions Updated Successfully',
+//     data: result
+//   });
+// });
 
 const getTermsAndConditions = catchAsync(async (_req: Request, res: Response) => {
   const result = await TermsAndConditionsService.getTermsAndConditionsFromDB();
@@ -53,7 +53,7 @@ const deleteTermsAndConditions = catchAsync(async (req: Request, res: Response) 
 
 export const TermsAndConditionsController = {
   createTermsAndConditions,
-  updateTermsAndConditions,
+  // updateTermsAndConditions,
   getTermsAndConditions,
   deleteTermsAndConditions
 };

@@ -10,7 +10,7 @@ const router = express.Router();
 
 router
   .route('/')
-  .post(
+  .patch(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
     validateRequest(PrivacyPolicyValidation.createPrivacyPolicyZodSchema),
     PrivacyController.createPrivacy
@@ -19,11 +19,11 @@ router
 
 router
   .route('/:id')
-  .patch(
-    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-    validateRequest(PrivacyPolicyValidation.updatePrivacyPolicyZodSchema),
-    PrivacyController.updatePrivacy
-  )
+  // .patch(
+  //   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  //   validateRequest(PrivacyPolicyValidation.updatePrivacyPolicyZodSchema),
+  //   PrivacyController.updatePrivacy
+  // )
   .delete(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
     PrivacyController.deletePrivacy

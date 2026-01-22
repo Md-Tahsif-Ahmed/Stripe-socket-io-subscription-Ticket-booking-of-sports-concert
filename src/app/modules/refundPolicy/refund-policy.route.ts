@@ -10,7 +10,7 @@ const router = express.Router();
 
 router
   .route('/')
-  .post(
+  .patch(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
     validateRequest(RefundPolicyValidation.createRefundPolicyZodSchema),
     RefundPolicyController.createRefundPolicy
@@ -19,11 +19,11 @@ router
 
 router
   .route('/:id')
-  .patch(
-    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-    validateRequest(RefundPolicyValidation.updateRefundPolicyZodSchema),
-    RefundPolicyController.updateRefundPolicy
-  )
+  // .patch(
+  //   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+  //   validateRequest(RefundPolicyValidation.updateRefundPolicyZodSchema),
+  //   RefundPolicyController.updateRefundPolicy
+  // )
   .delete(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
     RefundPolicyController.deleteRefundPolicy

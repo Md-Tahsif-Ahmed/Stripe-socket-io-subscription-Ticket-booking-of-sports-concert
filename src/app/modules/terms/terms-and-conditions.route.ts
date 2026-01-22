@@ -10,7 +10,7 @@ const router = express.Router();
 
 router
     .route('/')
-    .post(
+    .patch(
         auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
         validateRequest(TermsAndConditionsValidation.createTermsAndConditionsZodSchema),
         TermsAndConditionsController.createTermsAndConditions
@@ -19,11 +19,11 @@ router
 
 router
     .route('/:id')
-    .patch(
-        auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-        validateRequest(TermsAndConditionsValidation.updateTermsAndConditionsZodSchema),
-        TermsAndConditionsController.updateTermsAndConditions
-    )
+    // .patch(
+    //     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+    //     validateRequest(TermsAndConditionsValidation.updateTermsAndConditionsZodSchema),
+    //     TermsAndConditionsController.updateTermsAndConditions
+    // )
     .delete(
         auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
         TermsAndConditionsController.deleteTermsAndConditions

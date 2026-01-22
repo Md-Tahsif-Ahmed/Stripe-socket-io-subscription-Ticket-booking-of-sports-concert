@@ -6,7 +6,7 @@ import { PrivacyService } from "./privacy-policy.service";
 
 const createPrivacy = catchAsync(async (req: Request, res: Response) => {
   const payload: IPrivacy = req.body;
-  const result = await PrivacyService.createPrivacyToDB(payload);
+  const result = await PrivacyService.upsertPrivacyToDB(payload);
 
   sendResponse(res, {
     statusCode: 201,
@@ -16,18 +16,18 @@ const createPrivacy = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updatePrivacy = catchAsync(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const payload: Partial<IPrivacy> = req.body;
-  const result = await PrivacyService.updatePrivacyToDB(id, payload);
+// const updatePrivacy = catchAsync(async (req: Request, res: Response) => {
+//   const id = req.params.id;
+//   const payload: Partial<IPrivacy> = req.body;
+//   const result = await PrivacyService.updatePrivacyToDB(id, payload);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Privacy Updated Successfully",
-    data: result,
-  });
-});
+//   sendResponse(res, {
+//     statusCode: 200,
+//     success: true,
+//     message: "Privacy Updated Successfully",
+//     data: result,
+//   });
+// });
 
 const getPrivacy = catchAsync(async (_req: Request, res: Response) => {
   const result = await PrivacyService.getPrivacyFromDB();
@@ -54,7 +54,7 @@ const deletePrivacy = catchAsync(async (req: Request, res: Response) => {
 
 export const PrivacyController = {
   createPrivacy,
-  updatePrivacy,
+  // updatePrivacy,
   getPrivacy,
   deletePrivacy,
 };

@@ -9,7 +9,7 @@ const router = express.Router();
 
 router
     .route('/')
-    .post(
+    .patch(
         auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
         validateRequest(AboutUsValidation.createAboutUsZodSchema),
         AboutUsController.createAboutUs
@@ -18,11 +18,11 @@ router
 
 router
     .route('/:id')
-    .patch(
-        auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
-        validateRequest(AboutUsValidation.updateAboutUsZodSchema),
-        AboutUsController.updateAboutUs
-    )
+    // .patch(
+    //     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
+    //     validateRequest(AboutUsValidation.updateAboutUsZodSchema),
+    //     AboutUsController.updateAboutUs
+    // )
     .delete(
         auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
         AboutUsController.deleteAboutUs

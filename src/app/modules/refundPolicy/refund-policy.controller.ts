@@ -6,7 +6,7 @@ import { RefundPolicyService } from "./refund-policy.service";
 
 const createRefundPolicy = catchAsync(async (req: Request, res: Response) => {
   const payload: IRefundPolicy = req.body;
-  const result = await RefundPolicyService.createRefundPolicyToDB(payload);
+  const result = await RefundPolicyService.upsertRefundPolicyToDB(payload);
 
   sendResponse(res, {
     statusCode: 201,
@@ -16,18 +16,18 @@ const createRefundPolicy = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateRefundPolicy = catchAsync(async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const payload: Partial<IRefundPolicy> = req.body;
-  const result = await RefundPolicyService.updateRefundPolicyToDB(id, payload);
+// const updateRefundPolicy = catchAsync(async (req: Request, res: Response) => {
+//   const id = req.params.id;
+//   const payload: Partial<IRefundPolicy> = req.body;
+//   const result = await RefundPolicyService.updateRefundPolicyToDB(id, payload);
 
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Refund Policy Updated Successfully",
-    data: result,
-  });
-});
+//   sendResponse(res, {
+//     statusCode: 200,
+//     success: true,
+//     message: "Refund Policy Updated Successfully",
+//     data: result,
+//   });
+// });
 
 const getRefundPolicy = catchAsync(async (_req: Request, res: Response) => {
   const result = await RefundPolicyService.getRefundPolicyFromDB();
@@ -54,7 +54,7 @@ const deleteRefundPolicy = catchAsync(async (req: Request, res: Response) => {
 
 export const RefundPolicyController = {
   createRefundPolicy,
-  updateRefundPolicy,
+  // updateRefundPolicy,
   getRefundPolicy,
   deleteRefundPolicy,
 };
