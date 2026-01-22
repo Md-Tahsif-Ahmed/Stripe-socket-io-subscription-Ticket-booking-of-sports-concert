@@ -97,7 +97,7 @@ const getAllTeamsFromDB = async (query: any) => {
   };
 };
 
- const getTeamByIdFromDB = async (id: string): Promise<ITeam> => {
+const getTeamByIdFromDB = async (id: string): Promise<ITeamWithEvents> => {
     const Team = await TeamModel.findById(id).lean(); // lean() for performance, plain JS object
 
     if (!Team) {
@@ -108,7 +108,7 @@ const getAllTeamsFromDB = async (query: any) => {
 
 
   const events = await EventModel.find({
-    teamId: Team._id,
+    $or: [{ teamA: Team._id }, { teamB: Team._id }],
     eventDate: { $gte: now },
   })
     .select(
