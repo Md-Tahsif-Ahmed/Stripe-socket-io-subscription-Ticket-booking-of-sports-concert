@@ -27,9 +27,9 @@ app.use(Morgan.errorHandler);
 app.use(
   cors({
     origin: [
-      // "http://10.10.7.46:30011",
+       "http://10.10.7.46:3001",
+       "http://10.10.7.49:3000",
       // "http://10.10.7.41:5003",
-      // "http://10.10.7.49:3000",
       // "http://10.10.7.49:1001",
       // "http://10.10.7.6:1001",
       // "https://admin-ticket-booking.netlify.app",
