@@ -27,20 +27,24 @@ app.use(Morgan.errorHandler);
 app.use(
   cors({
     origin: [
-      "http://10.10.7.46:30011",
-      "http://10.10.7.41:5003",
-      "http://10.10.7.49:3000",
-      "http://10.10.7.49:1001",
-      "http://10.10.7.6:1001",
-      "https://admin-ticket-booking.netlify.app",
+      // "http://10.10.7.46:30011",
+      // "http://10.10.7.41:5003",
+      // "http://10.10.7.49:3000",
+      // "http://10.10.7.49:1001",
+      // "http://10.10.7.6:1001",
+      // "https://admin-ticket-booking.netlify.app",
+
+      // "https://ticket-booking-dashboard-ad.vercel.app",
+      // "https://adrien-ticket-booking-website.vercel.app",
+
       "http://72.62.190.141:3000",
-      "http://72.62.190.141:4173",
       "http://adrienticket.com",
+      "http://72.62.190.141:4173",
       "http://dashboard.adrienticket.com",
-      "https://ticket-booking-dashboard-ad.vercel.app",
-      "https://adrien-ticket-booking-website.vercel.app",
     ],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"], // Make sure necessary headers are allowed
+    exposedHeaders: ["x-auth-token"],
   }),
 );
 
