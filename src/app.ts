@@ -56,6 +56,17 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 //file retrieve
 app.use(express.static("uploads"));
+// ✅ Serve thumbnails
+app.use(
+  "/thumbnail",
+  express.static(path.join(__dirname, "../thumbnail"))
+);
+
+// ✅ Serve seatingView images
+app.use(
+  "/seatingView",
+  express.static(path.join(__dirname, "../seatingView"))
+);
 
 //router
 app.use("/api/v1", router);
