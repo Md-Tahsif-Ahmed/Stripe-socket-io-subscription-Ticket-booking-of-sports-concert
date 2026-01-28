@@ -27,8 +27,12 @@ app.use(Morgan.errorHandler);
 app.use(
   cors({
     origin: [
-       "http://10.10.7.46:3001",
-       "http://10.10.7.49:3000",
+      "http://10.10.7.46:3001",
+      "http://10.10.7.49:3000",
+      "http://72.62.190.141:3000",
+      "http://adrienticket.com",
+      "http://72.62.190.141:4173",
+      "http://dashboard.adrienticket.com",
       // "http://10.10.7.41:5003",
       // "http://10.10.7.49:1001",
       // "http://10.10.7.6:1001",
@@ -36,11 +40,6 @@ app.use(
 
       // "https://ticket-booking-dashboard-ad.vercel.app",
       // "https://adrien-ticket-booking-website.vercel.app",
-
-      "http://72.62.190.141:3000",
-      "http://adrienticket.com",
-      "http://72.62.190.141:4173",
-      "http://dashboard.adrienticket.com",
     ],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"], // Make sure necessary headers are allowed
@@ -57,16 +56,10 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 //file retrieve
 app.use(express.static("uploads"));
 // ✅ Serve thumbnails
-app.use(
-  "/thumbnail",
-  express.static(path.join(__dirname, "../thumbnail"))
-);
+app.use("/thumbnail", express.static(path.join(__dirname, "../thumbnail")));
 
 // ✅ Serve seatingView images
-app.use(
-  "/seatingView",
-  express.static(path.join(__dirname, "../seatingView"))
-);
+app.use("/seatingView", express.static(path.join(__dirname, "../seatingView")));
 
 //router
 app.use("/api/v1", router);
