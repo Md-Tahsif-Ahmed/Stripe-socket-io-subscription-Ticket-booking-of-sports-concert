@@ -13,7 +13,7 @@ export type IFolderName =
 export const getSingleFilePath = (files: any, folderName: IFolderName) => {
   const fileField = files && files[folderName];
   if (fileField && Array.isArray(fileField) && fileField.length > 0) {
-    return `/${folderName}/${fileField[0].filename}`;
+    return `uploads/${folderName}/${fileField[0].filename}`;
   }
 
   return undefined;
