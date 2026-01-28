@@ -79,7 +79,7 @@ const fileUploadHandler = () => {
    
     ) {
       if (
-        file.fieldname === "images/png" ||
+        file.mimetype === "images/png" ||
         file.mimetype === "images/jpg" ||
         file.mimetype === "images/jpeg" ||
         file.mimetype === "images/svg" ||
