@@ -14,7 +14,7 @@ const app: Application = express();
  * =========================
  * Stripe Webhook (RAW BODY)
  * =========================
- * ⚠️ Must be BEFORE express.json()
+ * Must be BEFORE express.json()
  */
 app.post(
   "/api/v1/payments/webhook/stripe",
@@ -59,7 +59,7 @@ app.use(Morgan.errorHandler);
  * =========================
  * Body Parsers
  * =========================
- * ⚠️ multipart/form-data handled by multer (NOT here)
+ * multipart/form-data handled by multer (NOT here)
  */
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
