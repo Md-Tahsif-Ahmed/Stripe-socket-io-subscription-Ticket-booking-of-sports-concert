@@ -19,7 +19,7 @@ const app: Application = express();
 app.post(
   "/api/v1/payments/webhook/stripe",
   express.raw({ type: "application/json" }),
-  PaymentController.stripeWebhook
+  PaymentController.stripeWebhook,
 );
 
 /**
@@ -31,12 +31,14 @@ app.use(
   cors({
     origin: [
       "http://dashboard.adrienticket.com",
+      "http://72.62.190.141:4173",
       "http://adrienticket.com",
+      "http://72.62.190.141:3000",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
-  })
+  }),
 );
 
 /**
@@ -73,10 +75,7 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
  * uploads/seatingView
  * etc.
  */
-app.use(
-  "/uploads",
-  express.static(path.join(process.cwd(), "uploads"))
-);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 /**
  * =========================
@@ -120,7 +119,6 @@ app.use((req: Request, res: Response) => {
 });
 
 export default app;
-
 
 // import express, { Application, Request, Response } from "express";
 // import cors from "cors";
@@ -191,9 +189,8 @@ export default app;
 // // // app.use(express.urlencoded({ extended: true }));
 
 // // app.use(express.urlencoded({ extended: true, limit: "1mb" }));
-// app.use(express.json({ limit: "50mb" })); 
+// app.use(express.json({ limit: "50mb" }));
 // app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
 
 // //file retrieve
 // app.use(express.static("uploads"));
