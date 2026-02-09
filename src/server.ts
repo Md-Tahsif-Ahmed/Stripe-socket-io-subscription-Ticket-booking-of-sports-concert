@@ -7,6 +7,8 @@ import { socketHelper } from "./helpers/socketHelper";
 import { Server } from "socket.io";
 import seedSuperAdmin from "./DB";
 import { startCronJobs } from "./cron";
+import { connectRedis } from "./shared/redisClient";
+ 
 
 //uncaught exception
 process.on("uncaughtException", (error) => {
@@ -20,7 +22,7 @@ async function main() {
   try {
     // create super admin
     seedSuperAdmin();
-
+    await connectRedis(); // 🔥 Redis connect
     mongoose.connect(config.database_url as string);
     logger.info(colors.green("🚀 Database connected successfully"));
 
