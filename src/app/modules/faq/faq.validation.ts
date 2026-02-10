@@ -4,7 +4,7 @@ import { z } from "zod";
  * FAQ Category Enum
  * Only allowed values
  */
-const faqCategoryEnum = z.enum(["membership", "category"]);
+const faqCategoryEnum = z.enum(["membership", "community"]);
 
 /**
  * Create FAQ Validation

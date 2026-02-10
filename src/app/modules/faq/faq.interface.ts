@@ -1,5 +1,5 @@
 export type TFaq = {
   question: string;
   answer: string;
-  category: "membership" | "category";
+  category: "membership" | "community";
 };
