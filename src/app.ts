@@ -34,6 +34,8 @@ app.use(
       "http://72.62.190.141:4173",
       "http://adrienticket.com",
       "http://72.62.190.141:3000",
+      "http://10.10.7.49:3000",
+      "http://10.10.7.49:5173",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
