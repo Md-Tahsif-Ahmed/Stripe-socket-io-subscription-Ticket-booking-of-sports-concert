@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { Faq } from "./faq.model";
-import mongoose from "mongoose";
+import mongoose, { FilterQuery } from "mongoose";
 import ApiError from "../../../errors/ApiErrors";
 import { TFaq } from "./faq.interface";
 
@@ -13,10 +13,19 @@ const createFaqToDB = async (payload: TFaq) => {
   return faq;
 };
 
-const faqsFromDB = async () => {
-  const faqs = await Faq.find({});
+ 
+
+const faqsFromDB = async (category?: string) => {
+  const query: FilterQuery<TFaq> = {};
+
+  if (category) {
+    query.category = category;
+  }
+
+  const faqs = await Faq.find(query).sort({ createdAt: -1 });
   return faqs;
 };
+
 
 const deleteFaqToDB = async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {

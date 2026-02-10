@@ -3,6 +3,10 @@ import { TFaq } from "./faq.interface";
 
 const faqSchema = new Schema<TFaq>(
   {
+    category: {
+      type: String,
+      required: false,
+    },
     question: {
       type: String,
       required: true,

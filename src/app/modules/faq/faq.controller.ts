@@ -41,7 +41,9 @@ const deleteFaq = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getFaqs = catchAsync(async (req: Request, res: Response) => {
-  const result = await FaqService.faqsFromDB();
+  const { category } = req.query;
+
+  const result = await FaqService.faqsFromDB(category as string);
 
   sendResponse(res, {
     statusCode: 200,
@@ -50,6 +52,7 @@ const getFaqs = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 
 export const FaqController = {
   createFaq,
